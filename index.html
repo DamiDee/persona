@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+    <!-- SEO -->
+    <title>Persona — Conversations with minds that shaped you</title>
+    <meta name="description" content="Persona lets you have simulated conversations with curated personalities modeled on the teaching style, writings, and spoken corpus of influential public figures." />
+    <meta name="theme-color" content="#0a0a0b" />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Persona" />
+    <meta property="og:description" content="Talk to the minds that shaped you." />
+    <meta property="og:type" content="website" />
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      /* Prevent FOUC — apply dark base color before any JS/CSS loads */
+      html[data-theme="dark"] { background: #0a0a0b; }
+      html[data-theme="light"] { background: #ffffff; }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

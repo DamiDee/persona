@@ -1,0 +1,166 @@
+/* ============================================================
+   PERSONA — Design Tokens
+   All CSS custom properties. Imported FIRST in main.jsx.
+   Light mode is the default; dark mode overrides via [data-theme="dark"].
+   ============================================================ */
+
+:root,
+[data-theme="light"] {
+  /* Backgrounds */
+  --color-bg-base: #ffffff;
+  --color-bg-secondary: #f7f8fa;
+  --color-bg-tertiary: #eef0f3;
+
+  /* Glass fills */
+  --color-glass: rgba(255, 255, 255, 0.6);
+  --color-glass-medium: rgba(255, 255, 255, 0.75);
+  --color-glass-strong: rgba(255, 255, 255, 0.9);
+
+  /* Text */
+  --color-text-primary: #000000;
+  --color-text-secondary: #2d3139;
+  --color-text-tertiary: #6b7280;
+
+  /* Borders */
+  --color-border: rgba(0, 0, 0, 0.15);
+  --color-border-strong: rgba(0, 0, 0, 0.25);
+
+  /* Accent — Pure Black in light mode, preserving cyan for dark mode */
+  --color-accent: #000000;
+  --color-accent-glow: #1a1a1e;
+  --color-accent-pressed: #333338;
+  --color-accent-subtle: rgba(0, 0, 0, 0.05);
+  --color-accent-subtle-hover: rgba(0, 0, 0, 0.08);
+  --color-button-text: #ffffff;
+
+  /* Destructive */
+  --color-destructive: #e53e3e;
+  --color-destructive-subtle: rgba(229, 62, 62, 0.08);
+
+  /* Shadows */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.08);
+  --shadow-accent: 0 4px 12px rgba(0, 0, 0, 0.15);
+  --shadow-accent-lg: 0 8px 24px rgba(0, 0, 0, 0.2);
+
+  /* Glass blur */
+  --blur-glass: blur(24px) saturate(180%);
+  --blur-glass-strong: blur(40px) saturate(200%);
+
+  /* Backdrop overlay */
+  --color-overlay: rgba(10, 10, 11, 0.4);
+
+  /* Neural background */
+  --neural-node-color: rgba(0, 194, 209, 0.12);
+  --neural-line-color: rgba(0, 194, 209, 0.06);
+  --neural-active-color: rgba(0, 194, 209, 0.4);
+}
+
+[data-theme="dark"] {
+  /* Backgrounds */
+  --color-bg-base: #0a0a0b;
+  --color-bg-secondary: #141416;
+  --color-bg-tertiary: #1e1e22;
+
+  /* Glass fills */
+  --color-glass: rgba(20, 20, 22, 0.6);
+  --color-glass-medium: rgba(20, 20, 22, 0.75);
+  --color-glass-strong: rgba(20, 20, 22, 0.9);
+
+  /* Text */
+  --color-text-primary: #f5f6f7;
+  --color-text-secondary: #9a9da6;
+  --color-text-tertiary: #5c5f66;
+
+  /* Borders */
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-border-strong: rgba(255, 255, 255, 0.16);
+
+  /* Accent — Cyan */
+  --color-accent: #22d3ee;
+  --color-accent-glow: #67e8f9;
+  --color-accent-pressed: #0e7490;
+  --color-accent-subtle: rgba(34, 211, 238, 0.08);
+  --color-accent-subtle-hover: rgba(34, 211, 238, 0.14);
+  --color-button-text: #0a0a0b;
+
+  /* Destructive */
+  --color-destructive: #fc8181;
+  --color-destructive-subtle: rgba(252, 129, 129, 0.08);
+
+  /* Shadows */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.5);
+  --shadow-accent: 0 0 20px rgba(34, 211, 238, 0.35);
+  --shadow-accent-lg: 0 0 40px rgba(34, 211, 238, 0.25);
+
+  /* Glass blur — same values, different bg */
+  --blur-glass: blur(24px) saturate(180%);
+  --blur-glass-strong: blur(40px) saturate(200%);
+
+  /* Backdrop overlay */
+  --color-overlay: rgba(0, 0, 0, 0.6);
+
+  /* Neural background */
+  --neural-node-color: rgba(34, 211, 238, 0.12);
+  --neural-line-color: rgba(34, 211, 238, 0.06);
+  --neural-active-color: rgba(34, 211, 238, 0.4);
+}
+
+/* ============================================================
+   Typography tokens
+   ============================================================ */
+:root {
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter",
+    sans-serif;
+  --font-mono: "SF Mono", "Fira Code", monospace;
+
+  /* Scale */
+  --text-display: 3.5rem;   /* 56px */
+  --text-h1: 2.5rem;        /* 40px */
+  --text-h2: 1.75rem;       /* 28px */
+  --text-h3: 1.25rem;       /* 20px */
+  --text-body-lg: 1.0625rem; /* 17px */
+  --text-body: 0.9375rem;   /* 15px */
+  --text-caption: 0.8125rem; /* 13px */
+
+  /* Weights */
+  --font-bold: 700;
+  --font-semibold: 600;
+  --font-medium: 500;
+  --font-regular: 400;
+
+  /* ============================================================
+     Spacing tokens (8pt scale)
+     ============================================================ */
+  --space-1: 0.25rem;   /* 4px */
+  --space-2: 0.5rem;    /* 8px */
+  --space-3: 0.75rem;   /* 12px */
+  --space-4: 1rem;      /* 16px */
+  --space-6: 1.5rem;    /* 24px */
+  --space-8: 2rem;      /* 32px */
+  --space-12: 3rem;     /* 48px */
+  --space-16: 4rem;     /* 64px */
+  --space-24: 6rem;     /* 96px */
+  --space-32: 8rem;     /* 128px */
+
+  /* ============================================================
+     Radius tokens
+     ============================================================ */
+  --radius-sm: 0.5rem;    /* 8px */
+  --radius-md: 0.75rem;   /* 12px */
+  --radius-lg: 1.25rem;   /* 20px */
+  --radius-xl: 1.75rem;   /* 28px */
+  --radius-full: 9999px;
+
+  /* ============================================================
+     Transition tokens
+     ============================================================ */
+  --transition-fast: 150ms ease-out;
+  --transition-base: 250ms ease-out;
+  --transition-slow: 320ms ease-out;
+  --transition-theme: background-color 250ms ease, color 250ms ease,
+    border-color 250ms ease, box-shadow 250ms ease;
+}
