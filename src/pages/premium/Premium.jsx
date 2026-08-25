@@ -1,12 +1,9 @@
-// Premium / Upgrade page with mock checkout flow
+// Premium.jsx — Upgrade page with dark charcoal pricing cards & mock checkout flow
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, CreditCard, Lock, Zap, Infinity, Users, Mic, Star } from "lucide-react";
+import { Check, Lock, Zap, Crown, Sparkles, ArrowRight } from "lucide-react";
 import clsx from "clsx";
-import { GlassPanel } from "../../components/ui/GlassPanel";
-import { Button } from "../../components/ui/Button";
-import { Badge } from "../../components/ui/Badge";
 import { Input } from "../../components/ui/Input";
 import { useAuthStore } from "../../store/useAuthStore";
 import { useToast } from "../../components/ui/Toast";
@@ -20,35 +17,27 @@ const FREE_FEATURES = [
 ];
 
 const PREMIUM_FEATURES = [
-  "All 4 Personas — including premium voices",
-  "Unlimited messages",
-  "Priority response speed",
-  "Voice mode (coming soon)",
-  "Full conversation history & export",
-  "Early access to new Personas",
+  "All Personas — including PRO catalog",
+  "Unlimited conversation history & streaming",
+  "Priority response latency",
+  "Audio & Notion source sync",
+  "Early access to new trained minds",
 ];
 
 function CheckItem({ text, included }) {
   return (
-    <div className="flex items-start gap-3">
+    <div className="flex items-start gap-3 text-xs sm:text-sm">
       <div
         className={clsx(
-          "w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5",
+          "w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5",
           included
-            ? "bg-[var(--color-accent)] text-[var(--color-button-text)]"
-            : "bg-[var(--color-bg-tertiary)] text-[var(--color-text-tertiary)]"
+            ? "bg-amber-500/20 text-amber-300 border border-amber-500/40"
+            : "bg-zinc-800 text-zinc-600"
         )}
       >
-        {included ? <Check size={11} strokeWidth={2.5} /> : <span className="text-[10px]">–</span>}
+        {included ? <Check size={10} strokeWidth={3} /> : <span className="text-[10px]">–</span>}
       </div>
-      <span
-        className={clsx(
-          "text-[14px] leading-snug",
-          included ? "text-[var(--color-text-primary)]" : "text-[var(--color-text-tertiary)]"
-        )}
-      >
-        {text}
-      </span>
+      <span className={included ? "text-zinc-200" : "text-zinc-500"}>{text}</span>
     </div>
   );
 }
@@ -64,12 +53,11 @@ function CheckoutForm({ plan, billing, onSuccess, onCancel }) {
     setLoading(true);
     setError(null);
     try {
-      // MOCK — no real payment processor integrated.
       await paymentApi.processCheckout({ plan, billing, cardDetails: {} });
       onSuccess();
     } catch (err) {
       setError(err.message);
-      addToast({ message: err.message, type: "error" });
+      addToast({ title: err.message, type: "error" });
     } finally {
       setLoading(false);
     }
@@ -77,57 +65,49 @@ function CheckoutForm({ plan, billing, onSuccess, onCancel }) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, x: 20 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -20 }}
-      transition={{ duration: 0.3 }}
+      initial={{ opacity: 0, scale: 0.96 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.96 }}
+      className="p-8 rounded-3xl bg-[#0c0e12] border border-amber-500/30 max-w-md mx-auto shadow-2xl space-y-6 text-white"
     >
-      <GlassPanel intensity="strong" rounded="xl" className="p-8 max-w-md mx-auto">
-        <div className="space-y-6">
-          <div>
-            <h2 className="text-[var(--color-text-primary)] text-xl font-bold">
-              Complete your upgrade
-            </h2>
-            <p className="text-[var(--color-text-secondary)] text-[14px] mt-1">
-              Persona Premium · {billing === "annual" ? "Annual" : "Monthly"} · ${price.toFixed(2)}/mo
-            </p>
-          </div>
+      <div>
+        <h2 className="text-xl font-bold">Complete Upgrade</h2>
+        <p className="text-xs text-zinc-400 mt-1">
+          Persona PRO • {billing === "annual" ? "Annual" : "Monthly"} • ${price.toFixed(2)}/mo
+        </p>
+      </div>
 
-          {/* Demo notice */}
-          <div className="glass rounded-[var(--radius-md)] p-3 border border-[var(--color-accent)]/20">
-            <p className="text-[var(--color-accent)] text-[12px]">
-              {/* MOCK — no real payment processor integrated */}
-              🔒 Demo mode — enter any details below. No real payment will be processed.
-            </p>
-          </div>
+      <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs">
+        🔒 Demo Checkout Mode — enter any details below to activate PRO instantly.
+      </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <Input id="card-name" label="Name on card" type="text" defaultValue="Alex Morgan" />
-            <Input id="card-number" label="Card number" type="text" defaultValue="4242 4242 4242 4242" hint="Demo: any number works" />
-            <div className="grid grid-cols-2 gap-3">
-              <Input id="card-expiry" label="MM / YY" type="text" defaultValue="12/28" />
-              <Input id="card-cvc" label="CVC" type="text" defaultValue="123" />
-            </div>
-
-            {error && (
-              <p className="text-[var(--color-destructive)] text-[13px]">{error}</p>
-            )}
-
-            <Button type="submit" variant="primary" size="lg" fullWidth loading={loading}>
-              <Lock size={15} />
-              Pay ${price.toFixed(2)}/mo
-            </Button>
-
-            <button
-              type="button"
-              onClick={onCancel}
-              className="w-full text-[13px] text-[var(--color-text-tertiary)] hover:text-[var(--color-text-secondary)] transition-colors"
-            >
-              Back to plans
-            </button>
-          </form>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <Input id="card-name" label="Name on card" type="text" defaultValue="Alex Morgan" />
+        <Input id="card-number" label="Card number" type="text" defaultValue="4242 4242 4242 4242" />
+        <div className="grid grid-cols-2 gap-3">
+          <Input id="card-expiry" label="MM / YY" type="text" defaultValue="12/28" />
+          <Input id="card-cvc" label="CVC" type="text" defaultValue="123" />
         </div>
-      </GlassPanel>
+
+        {error && <p className="text-xs text-red-400">{error}</p>}
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full py-3 rounded-2xl bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold text-xs transition-all cursor-pointer shadow-md flex items-center justify-center gap-2"
+        >
+          <Lock size={14} />
+          <span>Pay ${price.toFixed(2)}/mo</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={onCancel}
+          className="w-full text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
+        >
+          Back to plans
+        </button>
+      </form>
     </motion.div>
   );
 }
@@ -140,42 +120,30 @@ function SuccessScreen() {
   }, []);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.94 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.4, type: "spring" }}
-      className="flex flex-col items-center gap-8 text-center max-w-sm mx-auto py-12"
-    >
-      <motion.div
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
-        transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-        className="w-24 h-24 rounded-full bg-[var(--color-accent)] flex items-center justify-center"
-        style={{ boxShadow: "0 0 60px rgba(0,194,209,0.4)" }}
-      >
-        <Check size={40} strokeWidth={2.5} className="text-[var(--color-button-text)]" />
-      </motion.div>
-
+    <div className="flex flex-col items-center gap-6 text-center max-w-sm mx-auto py-12 text-white">
+      <div className="w-20 h-20 rounded-full bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 shadow-[0_0_30px_rgba(245,158,11,0.3)]">
+        <Sparkles size={36} />
+      </div>
       <div>
-        <h2 className="text-[var(--color-text-primary)] text-2xl font-bold mb-2">
-          Welcome to Premium! ✦
-        </h2>
-        <p className="text-[var(--color-text-secondary)] text-[16px] leading-relaxed">
-          You now have access to all Personas, unlimited messages, and priority responses.
+        <h2 className="text-2xl font-bold">Welcome to PRO ✦</h2>
+        <p className="text-zinc-400 text-xs sm:text-sm mt-1">
+          You now have unlimited access to all personas, source materials, and features.
         </p>
       </div>
-
-      <Button variant="primary" size="lg" onClick={() => window.location.href = "/app/library"}>
-        <Zap size={16} />
-        Explore All Personas
-      </Button>
-    </motion.div>
+      <button
+        onClick={() => (window.location.href = "/app/library")}
+        className="px-6 py-3 rounded-full bg-white text-zinc-950 font-bold text-xs shadow-md cursor-pointer flex items-center gap-2"
+      >
+        <span>Explore All Personas</span>
+        <ArrowRight size={14} />
+      </button>
+    </div>
   );
 }
 
 export default function Premium() {
-  const [billing, setBilling] = useState("monthly"); // "monthly" | "annual"
-  const [step, setStep] = useState("plans"); // "plans" | "checkout" | "success"
+  const [billing, setBilling] = useState("monthly");
+  const [step, setStep] = useState("plans");
   const { user } = useAuthStore();
 
   const monthlyPrice = 12;
@@ -183,20 +151,18 @@ export default function Premium() {
 
   if (user?.plan === "premium" && step !== "success") {
     return (
-      <div className="h-full flex flex-col items-center justify-center p-8 text-center gap-4">
-        <Star size={48} className="text-[var(--color-accent)]" />
-        <h1 className="text-[var(--color-text-primary)] text-2xl font-bold">
-          You're already on Premium ✦
-        </h1>
-        <p className="text-[var(--color-text-secondary)]">
-          Enjoy unlimited access to all Personas and features.
+      <div className="h-full flex flex-col items-center justify-center p-8 text-center gap-4 text-white">
+        <Crown size={44} className="text-amber-400 animate-pulse" />
+        <h1 className="text-2xl font-bold">You are on Persona PRO ✦</h1>
+        <p className="text-zinc-400 text-sm max-w-md">
+          Enjoy unlimited access to all certified persona models and knowledge bases.
         </p>
       </div>
     );
   }
 
   return (
-    <div className="h-full overflow-y-auto px-6 py-10 max-w-5xl mx-auto">
+    <div className="h-full overflow-y-auto px-6 py-10 max-w-5xl mx-auto text-white">
       <AnimatePresence mode="wait">
         {step === "plans" && (
           <motion.div
@@ -204,152 +170,120 @@ export default function Premium() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -12 }}
-            transition={{ duration: 0.28 }}
             className="space-y-10"
           >
-            <div className="text-center space-y-3">
-              <h1 className="text-[var(--color-text-primary)] text-3xl font-bold tracking-tight">
-                Unlock the full Persona experience
+            <div className="text-center space-y-2">
+              <span className="text-xs font-bold uppercase tracking-widest text-amber-400 flex items-center justify-center gap-1.5">
+                <Crown size={14} /> Upgrade Plan
+              </span>
+              <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight">
+                Unlock the full Persona catalog
               </h1>
-              <p className="text-[var(--color-text-secondary)] text-[17px]">
-                Go deeper with all Personas, unlimited messages, and priority access.
+              <p className="text-zinc-400 text-sm max-w-lg mx-auto">
+                Go deeper with all certified minds, unlimited streaming, and source material sync.
               </p>
             </div>
 
-            {/* Billing toggle */}
+            {/* Billing Toggle */}
             <div className="flex items-center justify-center gap-3">
               <button
                 onClick={() => setBilling("monthly")}
                 className={clsx(
-                  "text-[14px] font-medium transition-colors",
-                  billing === "monthly"
-                    ? "text-[var(--color-text-primary)]"
-                    : "text-[var(--color-text-tertiary)]"
+                  "text-xs font-semibold cursor-pointer transition-colors",
+                  billing === "monthly" ? "text-white" : "text-zinc-500"
                 )}
               >
                 Monthly
               </button>
-
               <div
-                className="relative w-12 h-6 rounded-full bg-[var(--color-bg-tertiary)] border border-[var(--color-border)] cursor-pointer"
-                onClick={() => setBilling((b) => b === "monthly" ? "annual" : "monthly")}
-                role="switch"
-                aria-checked={billing === "annual"}
-                aria-label="Toggle annual billing"
+                onClick={() => setBilling((b) => (b === "monthly" ? "annual" : "monthly"))}
+                className="w-12 h-6 rounded-full bg-zinc-800 border border-zinc-700 p-0.5 cursor-pointer relative"
               >
-                <motion.div
-                  animate={{ x: billing === "annual" ? 24 : 2 }}
-                  transition={{ type: "spring", stiffness: 500, damping: 35 }}
-                  className="absolute top-1 w-4 h-4 rounded-full bg-[var(--color-accent)]"
+                <div
+                  className={clsx(
+                    "w-4 h-4 rounded-full bg-amber-400 transition-transform",
+                    billing === "annual" ? "translate-x-6" : "translate-x-0.5"
+                  )}
                 />
               </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setBilling("annual")}
-                  className={clsx(
-                    "text-[14px] font-medium transition-colors",
-                    billing === "annual"
-                      ? "text-[var(--color-text-primary)]"
-                      : "text-[var(--color-text-tertiary)]"
-                  )}
-                >
-                  Annual
-                </button>
-                <Badge variant="premium">Save 20%</Badge>
-              </div>
+              <button
+                onClick={() => setBilling("annual")}
+                className={clsx(
+                  "text-xs font-semibold cursor-pointer transition-colors flex items-center gap-1.5",
+                  billing === "annual" ? "text-white" : "text-zinc-500"
+                )}
+              >
+                <span>Annual</span>
+                <span className="px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 text-[10px] border border-amber-500/30 font-bold">
+                  Save 20%
+                </span>
+              </button>
             </div>
 
-            {/* Plan cards */}
+            {/* Plan Cards */}
             <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
-              {/* Free */}
-              <GlassPanel intensity="md" rounded="xl" className="p-8 space-y-6">
-                <div>
-                  <p className="text-caption">Free</p>
-                  <div className="flex items-baseline gap-1 mt-2">
-                    <span className="text-3xl font-bold text-[var(--color-text-primary)]">$0</span>
-                    <span className="text-[var(--color-text-secondary)] text-[14px]">/mo</span>
-                  </div>
-                  <p className="text-[var(--color-text-tertiary)] text-[13px] mt-1">
-                    No credit card required
-                  </p>
-                </div>
-
-                <div className="space-y-3">
-                  {FREE_FEATURES.map((f) => <CheckItem key={f} text={f} included />)}
-                </div>
-
-                <Button variant="secondary" size="md" fullWidth onClick={() => window.location.href = "/app/library"}>
-                  Current Plan
-                </Button>
-              </GlassPanel>
-
-              {/* Premium */}
-              <div className="relative">
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
-                  <Badge variant="active">Most Popular</Badge>
-                </div>
-                <GlassPanel
-                  intensity="strong"
-                  rounded="xl"
-                  className="p-8 space-y-6"
-                  style={{
-                    border: "1px solid rgba(0,194,209,0.35)",
-                    boxShadow: "0 0 40px rgba(0,194,209,0.12)",
-                  }}
-                >
+              {/* Free Card */}
+              <div className="p-8 rounded-3xl bg-[#0c0e12] border border-white/10 space-y-6 flex flex-col justify-between">
+                <div className="space-y-4">
                   <div>
-                    <p className="text-caption text-[var(--color-accent)]">Premium</p>
-                    <div className="flex items-baseline gap-1 mt-2">
-                      <motion.span
-                        key={billing}
-                        initial={{ opacity: 0, y: -8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="text-3xl font-bold text-[var(--color-text-primary)]"
-                      >
-                        ${billing === "annual" ? annualPrice.toFixed(2) : monthlyPrice}
-                      </motion.span>
-                      <span className="text-[var(--color-text-secondary)] text-[14px]">/mo</span>
+                    <span className="text-xs font-mono uppercase text-zinc-500">Free Tier</span>
+                    <div className="text-3xl font-bold mt-1">$0</div>
+                  </div>
+                  <div className="space-y-3 pt-2">
+                    {FREE_FEATURES.map((f) => (
+                      <CheckItem key={f} text={f} included />
+                    ))}
+                  </div>
+                </div>
+                <button
+                  onClick={() => (window.location.href = "/app/library")}
+                  className="w-full py-3 rounded-2xl bg-zinc-900 border border-zinc-800 text-xs font-semibold text-zinc-300 hover:text-white transition-all cursor-pointer"
+                >
+                  Current Plan
+                </button>
+              </div>
+
+              {/* PRO Card */}
+              <div className="p-8 rounded-3xl bg-[#0d0f14] border border-amber-500/40 shadow-[0_0_40px_rgba(245,158,11,0.12)] space-y-6 flex flex-col justify-between relative">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-amber-500 text-zinc-950 text-[10px] font-bold uppercase tracking-wider shadow-md">
+                  Most Popular
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <span className="text-xs font-mono uppercase text-amber-400">Persona PRO</span>
+                    <div className="text-3xl font-bold mt-1 text-white">
+                      ${billing === "annual" ? annualPrice.toFixed(2) : monthlyPrice}{" "}
+                      <span className="text-xs text-zinc-500 font-normal">/mo</span>
                     </div>
-                    {billing === "annual" && (
-                      <p className="text-[var(--color-text-tertiary)] text-[13px] mt-1">
-                        Billed ${(annualPrice * 12).toFixed(2)} annually
-                      </p>
-                    )}
                   </div>
-
-                  <div className="space-y-3">
-                    {PREMIUM_FEATURES.map((f) => <CheckItem key={f} text={f} included />)}
+                  <div className="space-y-3 pt-2">
+                    {PREMIUM_FEATURES.map((f) => (
+                      <CheckItem key={f} text={f} included />
+                    ))}
                   </div>
-
-                  <Button variant="primary" size="md" fullWidth onClick={() => setStep("checkout")}>
-                    <Zap size={15} />
-                    Upgrade to Premium
-                  </Button>
-                </GlassPanel>
+                </div>
+                <button
+                  onClick={() => setStep("checkout")}
+                  className="w-full py-3 rounded-2xl bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold text-xs shadow-lg transition-all cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <Crown size={14} />
+                  <span>Upgrade to PRO</span>
+                </button>
               </div>
             </div>
           </motion.div>
         )}
 
         {step === "checkout" && (
-          <motion.div key="checkout" className="flex justify-center">
-            <div className="w-full max-w-md">
-              <CheckoutForm
-                plan="premium"
-                billing={billing}
-                onSuccess={() => setStep("success")}
-                onCancel={() => setStep("plans")}
-              />
-            </div>
-          </motion.div>
+          <CheckoutForm
+            plan="premium"
+            billing={billing}
+            onSuccess={() => setStep("success")}
+            onCancel={() => setStep("plans")}
+          />
         )}
 
-        {step === "success" && (
-          <motion.div key="success">
-            <SuccessScreen />
-          </motion.div>
-        )}
+        {step === "success" && <SuccessScreen />}
       </AnimatePresence>
     </div>
   );

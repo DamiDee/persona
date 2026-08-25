@@ -50,7 +50,7 @@ export function MobileDrawer({ isOpen, onClose, onOpenLibrary }) {
             <button
               onClick={onClose}
               aria-label="Close menu"
-              className="absolute top-4 right-3 z-10 w-8 h-8 flex items-center justify-center rounded-full glass text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] transition-colors"
+              className="absolute top-4 right-3 z-10 w-11 h-11 flex items-center justify-center rounded-full glass text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] transition-colors"
             >
               <X size={16} />
             </button>

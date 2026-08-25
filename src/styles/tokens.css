@@ -1,140 +1,84 @@
 /* ============================================================
-   PERSONA — Design Tokens
-   All CSS custom properties. Imported FIRST in main.jsx.
-   Light mode is the default; dark mode overrides via [data-theme="dark"].
+   PERSONA — Light-First Editorial Design Tokens
+   Default warm-white editorial light theme + cinematic dark theme.
    ============================================================ */
 
 :root,
 [data-theme="light"] {
-  /* Backgrounds */
-  --color-bg-base: #ffffff;
-  --color-bg-secondary: #f7f8fa;
-  --color-bg-tertiary: #eef0f3;
+  /* Core Backgrounds — Warm Editorial Off-White */
+  --color-bg-base: #f7f7f4;
+  --color-bg-secondary: #fafaf8;
+  --color-bg-tertiary: #f1f2ef;
+  --color-bg-elevated: #ffffff;
 
-  /* Glass fills */
-  --color-glass: rgba(255, 255, 255, 0.6);
-  --color-glass-medium: rgba(255, 255, 255, 0.75);
-  --color-glass-strong: rgba(255, 255, 255, 0.9);
+  /* Glass Fills */
+  --color-glass: rgba(255, 255, 255, 0.75);
+  --color-glass-medium: rgba(250, 250, 248, 0.88);
+  --color-glass-strong: rgba(255, 255, 255, 0.95);
 
-  /* Text */
-  --color-text-primary: #000000;
-  --color-text-secondary: #2d3139;
+  /* Text System — Deep Charcoal & Slate */
+  --color-text-primary: #0f1115;
+  --color-text-secondary: #4b5563;
   --color-text-tertiary: #6b7280;
+  --color-text-muted: #9ca3af;
 
-  /* Borders */
-  --color-border: rgba(0, 0, 0, 0.15);
-  --color-border-strong: rgba(0, 0, 0, 0.25);
+  /* Borders — Subtle & Architectural */
+  --color-border: rgba(0, 0, 0, 0.07);
+  --color-border-strong: rgba(0, 0, 0, 0.14);
+  --color-border-hover: rgba(0, 0, 0, 0.22);
 
-  /* Accent — Pure Black in light mode, preserving cyan for dark mode */
-  --color-accent: #000000;
-  --color-accent-glow: #1a1a1e;
-  --color-accent-pressed: #333338;
-  --color-accent-subtle: rgba(0, 0, 0, 0.05);
-  --color-accent-subtle-hover: rgba(0, 0, 0, 0.08);
+  /* Strategic Accent — Strategic Cyan */
+  --color-accent: #0891b2;
+  --color-accent-glow: #06b6d4;
+  --color-accent-pressed: #0e7490;
+  --color-accent-subtle: rgba(8, 145, 178, 0.08);
+  --color-accent-subtle-hover: rgba(8, 145, 178, 0.14);
   --color-button-text: #ffffff;
 
-  /* Destructive */
-  --color-destructive: #e53e3e;
-  --color-destructive-subtle: rgba(229, 62, 62, 0.08);
-
-  /* Shadows */
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.08);
-  --shadow-accent: 0 4px 12px rgba(0, 0, 0, 0.15);
-  --shadow-accent-lg: 0 8px 24px rgba(0, 0, 0, 0.2);
-
-  /* Glass blur */
-  --blur-glass: blur(24px) saturate(180%);
-  --blur-glass-strong: blur(40px) saturate(200%);
-
-  /* Backdrop overlay */
-  --color-overlay: rgba(10, 10, 11, 0.4);
-
-  /* Neural background */
-  --neural-node-color: rgba(0, 194, 209, 0.12);
-  --neural-line-color: rgba(0, 194, 209, 0.06);
-  --neural-active-color: rgba(0, 194, 209, 0.4);
-}
-
-[data-theme="dark"] {
-  /* Backgrounds */
-  --color-bg-base: #0a0a0b;
-  --color-bg-secondary: #141416;
-  --color-bg-tertiary: #1e1e22;
-
-  /* Glass fills */
-  --color-glass: rgba(20, 20, 22, 0.6);
-  --color-glass-medium: rgba(20, 20, 22, 0.75);
-  --color-glass-strong: rgba(20, 20, 22, 0.9);
-
-  /* Text */
-  --color-text-primary: #f5f6f7;
-  --color-text-secondary: #9a9da6;
-  --color-text-tertiary: #5c5f66;
-
-  /* Borders */
-  --color-border: rgba(255, 255, 255, 0.08);
-  --color-border-strong: rgba(255, 255, 255, 0.16);
-
-  /* Accent — Cyan */
-  --color-accent: #22d3ee;
-  --color-accent-glow: #67e8f9;
-  --color-accent-pressed: #0e7490;
-  --color-accent-subtle: rgba(34, 211, 238, 0.08);
-  --color-accent-subtle-hover: rgba(34, 211, 238, 0.14);
-  --color-button-text: #0a0a0b;
+  /* Category Specific Subtle Accents */
+  --cat-faith: #0891b2;
+  --cat-faith-bg: rgba(8, 145, 178, 0.08);
+  --cat-leadership: #d97706;
+  --cat-leadership-bg: rgba(217, 119, 6, 0.08);
+  --cat-literature: #e11d48;
+  --cat-literature-bg: rgba(225, 29, 72, 0.08);
+  --cat-culture: #7c3aed;
+  --cat-culture-bg: rgba(124, 58, 237, 0.08);
 
   /* Destructive */
-  --color-destructive: #fc8181;
-  --color-destructive-subtle: rgba(252, 129, 129, 0.08);
+  --color-destructive: #dc2626;
+  --color-destructive-subtle: rgba(220, 38, 38, 0.08);
 
   /* Shadows */
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
-  --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.5);
-  --shadow-accent: 0 0 20px rgba(34, 211, 238, 0.35);
-  --shadow-accent-lg: 0 0 40px rgba(34, 211, 238, 0.25);
+  --shadow-sm: 0 2px 8px rgba(15, 17, 21, 0.04);
+  --shadow-md: 0 8px 30px rgba(15, 17, 21, 0.07);
+  --shadow-lg: 0 20px 60px rgba(15, 17, 21, 0.1);
+  --shadow-accent: 0 4px 16px rgba(8, 145, 178, 0.2);
+  --shadow-accent-lg: 0 8px 28px rgba(8, 145, 178, 0.3);
 
-  /* Glass blur — same values, different bg */
-  --blur-glass: blur(24px) saturate(180%);
-  --blur-glass-strong: blur(40px) saturate(200%);
+  /* Glass Blur */
+  --blur-glass: blur(20px) saturate(140%);
+  --blur-glass-strong: blur(36px) saturate(160%);
 
-  /* Backdrop overlay */
-  --color-overlay: rgba(0, 0, 0, 0.6);
+  /* Overlay */
+  --color-overlay: rgba(15, 17, 21, 0.4);
 
-  /* Neural background */
-  --neural-node-color: rgba(34, 211, 238, 0.12);
-  --neural-line-color: rgba(34, 211, 238, 0.06);
-  --neural-active-color: rgba(34, 211, 238, 0.4);
-}
+  /* Fonts */
+  --font-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+  --font-serif: "Cormorant Garamond", Georgia, serif;
+  --font-mono: "JetBrains Mono", "SF Mono", monospace;
 
-/* ============================================================
-   Typography tokens
-   ============================================================ */
-:root {
-  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter",
-    sans-serif;
-  --font-mono: "SF Mono", "Fira Code", monospace;
-
-  /* Scale */
-  --text-display: 3.5rem;   /* 56px */
-  --text-h1: 2.5rem;        /* 40px */
-  --text-h2: 1.75rem;       /* 28px */
-  --text-h3: 1.25rem;       /* 20px */
-  --text-body-lg: 1.0625rem; /* 17px */
-  --text-body: 0.9375rem;   /* 15px */
+  /* Typography Scale */
+  --text-display: 4.5rem;    /* 72px */
+  --text-hero: 3.75rem;      /* 60px */
+  --text-h1: 2.75rem;        /* 44px */
+  --text-h2: 2rem;           /* 32px */
+  --text-h3: 1.375rem;       /* 22px */
+  --text-body-lg: 1.125rem;  /* 18px */
+  --text-body: 0.9375rem;    /* 15px */
   --text-caption: 0.8125rem; /* 13px */
 
-  /* Weights */
-  --font-bold: 700;
-  --font-semibold: 600;
-  --font-medium: 500;
-  --font-regular: 400;
-
-  /* ============================================================
-     Spacing tokens (8pt scale)
-     ============================================================ */
+  /* Spacing Scale */
   --space-1: 0.25rem;   /* 4px */
   --space-2: 0.5rem;    /* 8px */
   --space-3: 0.75rem;   /* 12px */
@@ -143,24 +87,77 @@
   --space-8: 2rem;      /* 32px */
   --space-12: 3rem;     /* 48px */
   --space-16: 4rem;     /* 64px */
+  --space-20: 5rem;     /* 80px */
   --space-24: 6rem;     /* 96px */
-  --space-32: 8rem;     /* 128px */
+  --space-30: 7.5rem;   /* 120px */
+  --space-40: 10rem;    /* 160px */
 
-  /* ============================================================
-     Radius tokens
-     ============================================================ */
+  /* Radius Tokens */
   --radius-sm: 0.5rem;    /* 8px */
-  --radius-md: 0.75rem;   /* 12px */
-  --radius-lg: 1.25rem;   /* 20px */
-  --radius-xl: 1.75rem;   /* 28px */
+  --radius-md: 0.875rem;  /* 14px */
+  --radius-lg: 1.375rem;  /* 22px */
+  --radius-xl: 2rem;      /* 32px */
   --radius-full: 9999px;
 
-  /* ============================================================
-     Transition tokens
-     ============================================================ */
+  /* Transitions */
   --transition-fast: 150ms ease-out;
-  --transition-base: 250ms ease-out;
-  --transition-slow: 320ms ease-out;
-  --transition-theme: background-color 250ms ease, color 250ms ease,
-    border-color 250ms ease, box-shadow 250ms ease;
+  --transition-base: 250ms cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-slow: 400ms cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-theme: background-color 250ms ease, color 250ms ease, border-color 250ms ease;
+}
+
+[data-theme="dark"] {
+  /* Core Backgrounds — Cinematic Charcoal */
+  --color-bg-base: #08090b;
+  --color-bg-secondary: #0f1115;
+  --color-bg-tertiary: #16181e;
+  --color-bg-elevated: #1c1f26;
+
+  /* Glass Fills */
+  --color-glass: rgba(15, 17, 21, 0.65);
+  --color-glass-medium: rgba(22, 24, 30, 0.78);
+  --color-glass-strong: rgba(28, 31, 38, 0.92);
+
+  /* Text System */
+  --color-text-primary: #f3f4f6;
+  --color-text-secondary: #9ca3af;
+  --color-text-tertiary: #6b7280;
+  --color-text-muted: #4b5563;
+
+  /* Borders */
+  --color-border: rgba(255, 255, 255, 0.07);
+  --color-border-strong: rgba(255, 255, 255, 0.14);
+  --color-border-hover: rgba(255, 255, 255, 0.22);
+
+  /* Strategic Accent — Vibrant Cyan */
+  --color-accent: #22d3ee;
+  --color-accent-glow: #67e8f9;
+  --color-accent-pressed: #0891b2;
+  --color-accent-subtle: rgba(34, 211, 238, 0.08);
+  --color-accent-subtle-hover: rgba(34, 211, 238, 0.14);
+  --color-button-text: #08090b;
+
+  /* Category Accents */
+  --cat-faith: #06b6d4;
+  --cat-faith-bg: rgba(6, 182, 212, 0.12);
+  --cat-leadership: #f59e0b;
+  --cat-leadership-bg: rgba(245, 158, 11, 0.12);
+  --cat-literature: #f43f5e;
+  --cat-literature-bg: rgba(244, 63, 94, 0.12);
+  --cat-culture: #a855f7;
+  --cat-culture-bg: rgba(168, 85, 247, 0.12);
+
+  /* Destructive */
+  --color-destructive: #f87171;
+  --color-destructive-subtle: rgba(248, 113, 113, 0.08);
+
+  /* Shadows */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.7);
+  --shadow-accent: 0 0 24px rgba(34, 211, 238, 0.25);
+  --shadow-accent-lg: 0 0 45px rgba(34, 211, 238, 0.35);
+
+  /* Overlay */
+  --color-overlay: rgba(5, 6, 8, 0.75);
 }

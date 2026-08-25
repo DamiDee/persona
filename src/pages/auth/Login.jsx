@@ -1,25 +1,21 @@
-// Login page
+// Login.jsx — Compact, high-contrast dark login form
 
+import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { motion } from "framer-motion";
-import { LogIn } from "lucide-react";
+import { LogIn, ArrowRight } from "lucide-react";
 import clsx from "clsx";
-import { GlassPanel } from "../../components/ui/GlassPanel";
 import { Input } from "../../components/ui/Input";
 import { Button } from "../../components/ui/Button";
-import { Toggle } from "../../components/ui/Toggle";
 import { useAuthStore } from "../../store/useAuthStore";
 import { useToast } from "../../components/ui/Toast";
-import { useState } from "react";
-import { useNavigate as useNav } from "react-router-dom";
 
 const schema = z.object({
   email: z.string().email("Please enter a valid email address"),
   password: z.string().min(1, "Password is required"),
-  remember: z.boolean().optional(),
 });
 
 function GoogleIcon() {
@@ -37,7 +33,6 @@ export default function Login() {
   const navigate = useNavigate();
   const { login, googleLogin, isLoading } = useAuthStore();
   const { addToast } = useToast();
-  const [remember, setRemember] = useState(false);
 
   const {
     register,
@@ -49,7 +44,7 @@ export default function Login() {
   const onSubmit = async (data) => {
     try {
       await login({ email: data.email, password: data.password });
-      addToast({ message: "Welcome back!", type: "success" });
+      addToast({ title: "Welcome back!", description: "Signed in successfully", type: "success" });
       navigate("/app/library");
     } catch (err) {
       setError("password", { message: err.message });
@@ -59,110 +54,84 @@ export default function Login() {
   const handleGoogle = async () => {
     try {
       await googleLogin();
-      addToast({ message: "Signed in with Google", type: "success" });
+      addToast({ title: "Signed in with Google", type: "success" });
       navigate("/app/library");
     } catch (err) {
-      addToast({ message: err.message, type: "error" });
+      addToast({ title: err.message, type: "error" });
     }
   };
 
   return (
-    <GlassPanel intensity="strong" rounded="xl" className="p-8">
-      <div className="space-y-6">
-        <div>
-          <h2 className="text-[var(--color-text-primary)] text-2xl font-bold">
-            Welcome back
-          </h2>
-          <p className="text-[var(--color-text-secondary)] text-[14px] mt-1">
-            Sign in to continue your conversations
-          </p>
-        </div>
-
-        {/* Google OAuth */}
-        <motion.button
-          whileHover={{ scale: 1.01 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={handleGoogle}
-          disabled={isLoading}
-          className={clsx(
-            "w-full flex items-center justify-center gap-3 px-4 py-3",
-            "rounded-[var(--radius-md)] border border-[var(--color-border)]",
-            "bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)]",
-            "text-[14px] font-medium transition-all duration-200",
-            "hover:border-[var(--color-accent)] hover:bg-[var(--color-accent-subtle)]",
-            "disabled:opacity-50"
-          )}
-          aria-label="Continue with Google"
-        >
-          <GoogleIcon />
-          Continue with Google
-        </motion.button>
-
-        {/* Divider */}
-        <div className="flex items-center gap-3">
-          <div className="flex-1 h-px bg-[var(--color-border)]" />
-          <span className="text-[12px] text-[var(--color-text-tertiary)]">or</span>
-          <div className="flex-1 h-px bg-[var(--color-border)]" />
-        </div>
-
-        {/* Form */}
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
-          <Input
-            id="login-email"
-            label="Email"
-            type="email"
-            error={errors.email?.message}
-            {...register("email")}
-          />
-          <Input
-            id="login-password"
-            label="Password"
-            type="password"
-            error={errors.password?.message}
-            {...register("password")}
-          />
-
-          <div className="flex items-center justify-between">
-            <Toggle
-              id="login-remember"
-              checked={remember}
-              onChange={setRemember}
-              label="Remember me"
-            />
-            <Link
-              to="/forgot-password"
-              className="text-[13px] text-[var(--color-accent)] hover:text-[var(--color-accent-glow)]"
-            >
-              Forgot password?
-            </Link>
-          </div>
-
-          <Button
-            type="submit"
-            variant="primary"
-            size="lg"
-            fullWidth
-            loading={isLoading}
-          >
-            <LogIn size={16} />
-            Sign In
-          </Button>
-        </form>
-
-        <p className="text-center text-[13px] text-[var(--color-text-tertiary)]">
-          Don't have an account?{" "}
-          <Link to="/signup" className="text-[var(--color-accent)] hover:text-[var(--color-accent-glow)] font-medium">
-            Sign up free
-          </Link>
-        </p>
-
-        <p className="text-center text-[11px] text-[var(--color-text-tertiary)] leading-relaxed">
-          By continuing, you agree to our{" "}
-          <a href="#" className="underline">Terms</a>{" "}
-          and{" "}
-          <a href="#" className="underline">Privacy Policy</a>.
+    <div className="p-8 rounded-3xl bg-[#0c0e12] border border-white/10 shadow-2xl space-y-6">
+      <div>
+        <h2 className="text-white text-2xl font-bold tracking-tight">
+          Welcome back
+        </h2>
+        <p className="text-zinc-400 text-xs mt-1">
+          Sign in to continue your conversations with remarkable minds
         </p>
       </div>
-    </GlassPanel>
+
+      {/* Google OAuth Button */}
+      <button
+        type="button"
+        onClick={handleGoogle}
+        disabled={isLoading}
+        className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-2xl bg-zinc-900 border border-zinc-800 text-xs font-semibold text-white hover:bg-zinc-800 hover:border-zinc-700 transition-all cursor-pointer shadow-sm"
+      >
+        <GoogleIcon />
+        <span>Continue with Google</span>
+      </button>
+
+      {/* Divider */}
+      <div className="flex items-center gap-3">
+        <div className="flex-1 h-px bg-zinc-800" />
+        <span className="text-[11px] text-zinc-500 font-mono">OR</span>
+        <div className="flex-1 h-px bg-zinc-800" />
+      </div>
+
+      {/* Form */}
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+        <Input
+          id="login-email"
+          label="Email address"
+          type="email"
+          error={errors.email?.message}
+          {...register("email")}
+        />
+        <Input
+          id="login-password"
+          label="Password"
+          type="password"
+          error={errors.password?.message}
+          {...register("password")}
+        />
+
+        <div className="flex justify-end">
+          <Link
+            to="/forgot-password"
+            className="text-xs text-cyan-400 hover:underline"
+          >
+            Forgot password?
+          </Link>
+        </div>
+
+        <button
+          type="submit"
+          disabled={isLoading}
+          className="w-full py-3 px-4 rounded-2xl bg-white hover:bg-zinc-200 text-zinc-950 font-bold text-xs transition-all shadow-md cursor-pointer flex items-center justify-center gap-2"
+        >
+          <span>Sign In</span>
+          <ArrowRight size={14} />
+        </button>
+      </form>
+
+      <p className="text-center text-xs text-zinc-500">
+        Don't have an account?{" "}
+        <Link to="/signup" className="text-cyan-400 hover:underline font-semibold">
+          Sign up free
+        </Link>
+      </p>
+    </div>
   );
 }

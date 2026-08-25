@@ -25,7 +25,7 @@ function ToastItem({ toast, onDismiss }) {
       exit={{ opacity: 0, x: 24, scale: 0.96 }}
       transition={{ duration: 0.25 }}
       className={clsx(
-        "glass-strong rounded-[var(--radius-md)] shadow-[var(--shadow-lg)]",
+        "bg-[var(--color-bg-elevated)] rounded-[var(--radius-md)] shadow-[var(--shadow-lg)]",
         "flex items-start gap-3 px-4 py-3.5 min-w-[280px] max-w-[360px]",
         "border border-[var(--color-border)]"
       )}

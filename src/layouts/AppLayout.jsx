@@ -1,10 +1,10 @@
-// AppLayout — persistent shell with sidebar, neural background, route outlet
-// Protected: redirects to /login if not authenticated.
+// AppLayout.jsx — Persistent shell with left navigation sidebar, top bar, and route outlet
+// Protected: redirects to /login if unauthenticated.
 
 import { useState } from "react";
 import { Outlet, Navigate, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, Info, ChevronRight } from "lucide-react";
+import { Menu, ChevronRight } from "lucide-react";
 import clsx from "clsx";
 import { Sidebar } from "../components/chat/Sidebar";
 import { MobileDrawer } from "../components/chat/MobileDrawer";
@@ -22,8 +22,6 @@ export function AppLayout() {
     toggleSidebar,
     getActivePersona,
     getActiveConversation,
-    personaInfoOpen,
-    togglePersonaInfo,
   } = useChatStore();
 
   if (!isAuthenticated) {
@@ -31,44 +29,46 @@ export function AppLayout() {
   }
 
   const activePersona = getActivePersona();
-  const activeConv = getActiveConversation();
 
   return (
-    <div className="flex h-dvh overflow-hidden bg-[var(--color-bg-base)] relative">
-      {/* Neural background — fixed behind everything */}
-      <NeuralBackground opacity={0.055} />
+    <div className="flex h-dvh overflow-hidden bg-[var(--color-bg-base)] text-[var(--color-text-primary)] relative font-sans transition-colors duration-300">
+      {/* Subtle Neural Network background */}
+      <NeuralBackground opacity={0.05} />
 
-      {/* Desktop sidebar */}
+      {/* Desktop Navigation Sidebar */}
       <Sidebar
         collapsed={sidebarCollapsed}
         onToggleCollapse={toggleSidebar}
         onOpenLibrary={() => navigate("/app/library")}
       />
 
-      {/* Mobile drawer */}
+      {/* Mobile Drawer */}
       <MobileDrawer
         isOpen={drawerOpen}
         onClose={() => setDrawerOpen(false)}
         onOpenLibrary={() => navigate("/app/library")}
       />
 
-      {/* Main content area */}
+      {/* Main Content Workspace */}
       <div className="flex-1 flex flex-col min-w-0 relative z-10">
-        {/* Top bar */}
-        <header className="flex-shrink-0 flex items-center justify-between px-4 py-3 glass-md border-b border-[var(--color-border)] safe-top">
-          {/* Mobile menu button */}
+        {/* Top Header Bar */}
+        <header className="flex-shrink-0 flex items-center justify-between px-4 sm:px-6 py-2.5 bg-[var(--color-bg-secondary)] border-b border-[var(--color-border)] safe-top transition-colors duration-300">
+          {/* Mobile Drawer Toggle */}
           <button
             onClick={() => setDrawerOpen(true)}
             aria-label="Open navigation menu"
-            className="lg:hidden w-9 h-9 flex items-center justify-center rounded-[var(--radius-md)] text-[var(--color-text-secondary)] hover:bg-[var(--color-accent-subtle)] hover:text-[var(--color-accent)] transition-colors"
+            className="lg:hidden w-11 h-11 flex items-center justify-center rounded-xl bg-[var(--color-bg-tertiary)] border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors cursor-pointer"
           >
             <Menu size={18} />
           </button>
 
-          {/* Center: persona info */}
+          {/* Active Persona Indicator */}
           <div className="flex items-center gap-2.5 mx-auto lg:mx-0">
             {activePersona ? (
-              <>
+              <div
+                onClick={() => navigate("/app/library")}
+                className="flex items-center gap-2.5 cursor-pointer group"
+              >
                 <Avatar
                   src={activePersona.avatar}
                   name={activePersona.name}
@@ -77,56 +77,47 @@ export function AppLayout() {
                   animated={false}
                 />
                 <div>
-                  <p className="text-[15px] font-semibold text-[var(--color-text-primary)] leading-none">
+                  <p className="text-xs font-bold text-[var(--color-text-primary)] group-hover:text-[var(--color-accent)] transition-colors leading-none">
                     {activePersona.name}
                   </p>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                    <span className="text-[11px] text-[var(--color-text-tertiary)]">
-                      Available
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-accent)] animate-pulse" />
+                    <span className="text-[10px] text-[var(--color-text-tertiary)] font-mono">
+                      Grounded Active
                     </span>
                   </div>
                 </div>
-              </>
+              </div>
             ) : (
               <button
                 onClick={() => navigate("/app/library")}
-                className="flex items-center gap-2 text-[var(--color-text-tertiary)] hover:text-[var(--color-accent)] transition-colors text-[14px]"
+                className="flex items-center gap-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors text-xs font-medium cursor-pointer"
               >
-                <img src="/1.png" alt="Persona Logo" className="w-8 h-8 object-contain" />
-                Choose a Persona
+                <span>Choose a Persona</span>
                 <ChevronRight size={14} />
               </button>
             )}
           </div>
 
-          {/* Info toggle */}
-          {activePersona && (
+          <div className="hidden sm:flex items-center gap-3">
             <button
-              onClick={togglePersonaInfo}
-              aria-label={personaInfoOpen ? "Hide persona info" : "Show persona info"}
-              className={clsx(
-                "w-9 h-9 flex items-center justify-center rounded-[var(--radius-md)]",
-                "transition-colors duration-150",
-                personaInfoOpen
-                  ? "bg-[var(--color-accent-subtle)] text-[var(--color-accent)]"
-                  : "text-[var(--color-text-tertiary)] hover:bg-[var(--color-accent-subtle)] hover:text-[var(--color-accent)]"
-              )}
+              onClick={() => navigate("/app/library")}
+              className="px-3.5 py-1.5 rounded-full bg-[var(--color-bg-tertiary)] border border-[var(--color-border)] hover:border-[var(--color-border-strong)] text-xs font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-all cursor-pointer"
             >
-              <Info size={18} />
+              Browse Minds
             </button>
-          )}
+          </div>
         </header>
 
-        {/* Page content */}
+        {/* Dynamic Route Outlet */}
         <main className="flex-1 overflow-hidden">
           <AnimatePresence mode="wait">
             <motion.div
               key={window.location.pathname}
-              initial={{ opacity: 0, y: 8 }}
+              initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.28, ease: "easeOut" }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
               className="h-full"
             >
               <Outlet />

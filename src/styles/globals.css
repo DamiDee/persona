@@ -44,20 +44,22 @@ body {
 }
 
 /* ---- Typography ---- */
-h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-sans);
-  color: var(--color-text-primary);
-  line-height: 1.2;
-  letter-spacing: -0.01em;
-}
+@layer base {
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-sans);
+    color: var(--color-text-primary);
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+  }
 
-h1 { font-size: var(--text-h1); font-weight: var(--font-bold); letter-spacing: -0.02em; }
-h2 { font-size: var(--text-h2); font-weight: var(--font-semibold); }
-h3 { font-size: var(--text-h3); font-weight: var(--font-medium); }
+  h1 { font-size: var(--text-h1); font-weight: var(--font-bold); letter-spacing: -0.02em; }
+  h2 { font-size: var(--text-h2); font-weight: var(--font-semibold); }
+  h3 { font-size: var(--text-h3); font-weight: var(--font-medium); }
 
-p {
-  color: var(--color-text-secondary);
-  line-height: 1.65;
+  p {
+    color: var(--color-text-secondary);
+    line-height: 1.65;
+  }
 }
 
 a {
@@ -103,6 +105,14 @@ a:hover { color: var(--color-accent-glow); }
   }
 
   /* Typography Utility Classes */
+  .font-serif {
+    font-family: var(--font-serif);
+  }
+
+  .font-sans {
+    font-family: var(--font-sans);
+  }
+
   .text-display {
     font-size: var(--text-display);
     font-weight: var(--font-bold);

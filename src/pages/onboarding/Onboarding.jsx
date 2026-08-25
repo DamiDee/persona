@@ -1,299 +1,356 @@
-// Onboarding — 4-slide swipeable intro with Framer Motion
+// Onboarding.jsx — Progressive 5-step intellectual space configuration flow
+// Zero emoji, Lucide icons, light-first theme support, and space completion moment.
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, ArrowLeft } from "lucide-react";
+import {
+  ArrowRight,
+  ArrowLeft,
+  Compass,
+  CheckCircle2,
+  Brain,
+  Sparkles,
+  BookOpen,
+  Check,
+  ChevronRight,
+} from "lucide-react";
 import clsx from "clsx";
-import { Button } from "../../components/ui/Button";
 import { Avatar } from "../../components/ui/Avatar";
+import { ThemeToggle } from "../../components/ui/ThemeToggle";
 import { NeuralBackground } from "../../components/chat/NeuralBackground";
 import { mockPersonas } from "../../data/mockPersonas";
-import { useReducedMotion } from "../../hooks/useReducedMotion";
 
-const slides = [
-  {
-    id: 1,
-    label: "Welcome",
-    headline: "Talk to the minds\nthat shaped you.",
-    sub: "Persona brings you into conversation with the voices that have defined leadership, faith, literature, and culture.",
-    visual: "hero",
-  },
-  {
-    id: 2,
-    label: "Grounded",
-    headline: "Every conversation,\ngrounded in their real words.",
-    sub: "Each Persona is built from a curated corpus of sermons, books, lectures, and interviews — not a generic AI.",
-    visual: "books",
-  },
-  {
-    id: 3,
-    label: "Choose",
-    headline: "Choose who you'd\nlike to speak with.",
-    sub: "Four distinct voices to start. Each with a unique perspective, tone, and depth.",
-    visual: "personas",
-  },
-  {
-    id: 4,
-    label: "Start",
-    headline: "Your next great\nconversation awaits.",
-    sub: "Sign up free — no credit card required. Premium voices available for subscribers.",
-    visual: "cta",
-  },
+const GOALS = [
+  { id: "explore", label: "Explore Ideas", desc: "Deep-dive into philosophy, faith, and timeless concepts" },
+  { id: "perspective", label: "Find Perspective", desc: "Gain fresh clarity on personal and ethical questions" },
+  { id: "teachings", label: "Study Teachings", desc: "Examine certified books, sermons, and historical essays" },
+  { id: "leadership", label: "Understand Leadership", desc: "Learn principles of impact, potential, and governance" },
 ];
 
-function HeroVisual({ reduced }) {
-  return (
-    <div className="relative w-48 h-48 mx-auto">
-      {[...Array(3)].map((_, i) => (
-        <motion.div
-          key={i}
-          animate={reduced ? {} : {
-            scale: [1, 1.1, 1],
-            opacity: [0.12, 0.04, 0.12],
-          }}
-          transition={{ duration: 3 + i, repeat: Infinity, delay: i * 0.7 }}
-          className="absolute inset-0 rounded-full border border-[var(--color-accent)]"
-          style={{ margin: `${i * 20}px` }}
-        />
-      ))}
-      <div className="absolute inset-0 flex items-center justify-center">
-        <div
-          className="w-32 h-32 rounded-full flex items-center justify-center bg-white border border-[var(--color-border)] shadow-lg"
-          style={{ boxShadow: "0 0 40px rgba(0,194,209,0.2)" }}
-        >
-          <img
-            src="/1.png"
-            alt="Persona Brand Logo"
-            className="w-22 h-22 object-contain"
-          />
-        </div>
-      </div>
-    </div>
-  );
-}
+const CATEGORIES = [
+  { id: "faith", label: "Faith & Spiritual Depth" },
+  { id: "leadership", label: "Leadership & Purpose" },
+  { id: "literature", label: "Literature & Authentic Voice" },
+  { id: "culture", label: "Modern Culture & Dialectic" },
+];
 
-function BooksVisual() {
-  const items = ["12 Sermons", "3 Books", "8 Lectures", "20 Interviews"];
-  return (
-    <div className="flex flex-wrap gap-2 justify-center max-w-xs mx-auto">
-      {items.map((item, i) => (
-        <motion.div
-          key={i}
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: i * 0.1 + 0.2 }}
-          className="glass rounded-[var(--radius-md)] px-4 py-2 text-[13px] font-medium text-[var(--color-accent)] border border-[var(--color-accent)]/20"
-        >
-          {item}
-        </motion.div>
-      ))}
-    </div>
-  );
-}
-
-function PersonasVisual() {
-  return (
-    <div className="flex gap-4 justify-center flex-wrap">
-      {mockPersonas.map((p, i) => (
-        <motion.div
-          key={p.id}
-          initial={{ opacity: 0, scale: 0.85 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: i * 0.08 + 0.1 }}
-          className="flex flex-col items-center gap-2"
-        >
-          <Avatar
-            name={p.name}
-            gradient={p.avatarGradient}
-            size="lg"
-            animated
-          />
-          <span className="text-[12px] text-[var(--color-text-secondary)] font-medium text-center max-w-[80px] leading-tight">
-            {p.name.split(" ")[0]}
-          </span>
-        </motion.div>
-      ))}
-    </div>
-  );
-}
-
-function CTAVisual() {
-  return (
-    <motion.div
-      initial={{ scale: 0.9, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
-      transition={{ type: "spring", stiffness: 200 }}
-      className="w-24 h-24 rounded-full mx-auto flex items-center justify-center text-4xl"
-      style={{
-        background: "linear-gradient(135deg, rgba(0,194,209,0.2), rgba(0,229,255,0.05))",
-        border: "2px solid rgba(0,194,209,0.4)",
-        boxShadow: "0 0 40px rgba(0,194,209,0.15)",
-      }}
-    >
-      ✦
-    </motion.div>
-  );
-}
+const PREFERENCES = [
+  { id: "detailed", label: "Detailed Explanations", desc: "Comprehensive responses with thorough textual citations" },
+  { id: "guidance", label: "Practical Guidance", desc: "Actionable wisdom grounded in direct teachings" },
+  { id: "concise", label: "Concise Summaries", desc: "Sharp, high-level insights for quick reading" },
+];
 
 export default function Onboarding() {
-  const [current, setCurrent] = useState(0);
-  const [direction, setDirection] = useState(1);
+  const [step, setStep] = useState(1);
+  const [selectedGoal, setSelectedGoal] = useState("explore");
+  const [selectedCategory, setSelectedCategory] = useState("faith");
+  const [selectedMinds, setSelectedMinds] = useState(["persona-01"]);
+  const [selectedPref, setSelectedPref] = useState("detailed");
+
   const navigate = useNavigate();
-  const reduced = useReducedMotion();
 
-  const goTo = (index) => {
-    setDirection(index > current ? 1 : -1);
-    setCurrent(index);
+  const toggleMind = (id) => {
+    setSelectedMinds((prev) =>
+      prev.includes(id) ? prev.filter((m) => m !== id) : [...prev, id]
+    );
   };
 
-  const next = () => {
-    if (current < slides.length - 1) goTo(current + 1);
+  const handleNext = () => {
+    if (step < 5) setStep(step + 1);
   };
 
-  const prev = () => {
-    if (current > 0) goTo(current - 1);
+  const handleBack = () => {
+    if (step > 1) setStep(step - 1);
   };
 
-  const slide = slides[current];
-
-  const variants = {
-    enter: (dir) => ({ opacity: 0, x: reduced ? 0 : dir * 40 }),
-    center: { opacity: 1, x: 0 },
-    exit: (dir) => ({ opacity: 0, x: reduced ? 0 : dir * -40 }),
+  const handleComplete = () => {
+    navigate("/app/library");
   };
 
   return (
-    <div className="min-h-dvh flex flex-col relative overflow-hidden bg-[var(--color-bg-base)]">
+    <div className="min-h-screen flex flex-col bg-[var(--color-bg-base)] text-[var(--color-text-primary)] relative overflow-hidden font-sans transition-colors duration-300">
+      {/* Background Neural Canvas */}
       <NeuralBackground opacity={0.06} />
 
-      {/* Skip button */}
-      <div className="absolute top-6 right-6 z-20">
-        <button
-          onClick={() => navigate("/login")}
-          className="text-[var(--color-text-tertiary)] hover:text-[var(--color-text-secondary)] text-[13px] transition-colors"
-          aria-label="Skip onboarding"
-        >
-          Skip
-        </button>
-      </div>
-
-      {/* Slide content */}
-      <div className="flex-1 flex flex-col items-center justify-center px-8 relative z-10">
-        <AnimatePresence mode="wait" custom={direction}>
-          <motion.div
-            key={current}
-            custom={direction}
-            variants={variants}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            transition={{ duration: 0.32, ease: "easeOut" }}
-            className="flex flex-col items-center gap-8 max-w-lg text-center"
-          >
-            {/* Visual */}
-            <div className="h-48 flex items-center justify-center w-full">
-              {slide.visual === "hero" && <HeroVisual reduced={reduced} />}
-              {slide.visual === "books" && <BooksVisual />}
-              {slide.visual === "personas" && <PersonasVisual />}
-              {slide.visual === "cta" && <CTAVisual />}
-            </div>
-
-            {/* Text */}
-            <div className="space-y-4">
-              <h1
-                className="text-[var(--color-text-primary)] font-bold leading-tight"
-                style={{ fontSize: "clamp(1.75rem, 5vw, 2.5rem)" }}
-              >
-                {slide.headline.split("\n").map((line, i) => (
-                  <span key={i}>
-                    {line}
-                    {i < slide.headline.split("\n").length - 1 && <br />}
-                  </span>
-                ))}
-              </h1>
-              <p className="text-[var(--color-text-secondary)] text-[17px] leading-relaxed">
-                {slide.sub}
-              </p>
-            </div>
-
-            {/* CTA slide actions */}
-            {current === slides.length - 1 && (
-              <div className="flex flex-col gap-3 w-full max-w-xs">
-                <Button
-                  variant="primary"
-                  size="lg"
-                  fullWidth
-                  onClick={() => navigate("/signup")}
-                >
-                  Get Started
-                  <ArrowRight size={16} />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="md"
-                  fullWidth
-                  onClick={() => navigate("/login")}
-                >
-                  I already have an account
-                </Button>
-              </div>
-            )}
-          </motion.div>
-        </AnimatePresence>
-      </div>
-
-      {/* Navigation */}
-      <div className="flex items-center justify-between px-8 pb-12 relative z-10">
-        {/* Prev */}
-        <button
-          onClick={prev}
-          disabled={current === 0}
-          aria-label="Previous slide"
-          className="w-10 h-10 flex items-center justify-center rounded-full glass text-[var(--color-text-tertiary)] disabled:opacity-0 disabled:pointer-events-none hover:text-[var(--color-accent)] transition-all"
-        >
-          <ArrowLeft size={18} />
-        </button>
-
-        {/* Dots */}
-        <div className="flex gap-2" role="tablist" aria-label="Slide navigation">
-          {slides.map((_, i) => (
-            <button
-              key={i}
-              role="tab"
-              aria-selected={i === current}
-              aria-label={`Go to slide ${i + 1}`}
-              onClick={() => goTo(i)}
-              className="transition-all duration-300"
-            >
-              <motion.div
-                animate={{
-                  width: i === current ? 24 : 8,
-                  backgroundColor:
-                    i === current
-                      ? "var(--color-accent)"
-                      : "var(--color-border-strong)",
-                }}
-                transition={{ duration: 0.25 }}
-                className="h-2 rounded-full"
-                style={{ width: 8 }}
-              />
-            </button>
-          ))}
+      {/* Top Header */}
+      <header className="p-6 flex items-center justify-between relative z-20">
+        <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/")}>
+          <div className="w-8 h-8 rounded-xl bg-[var(--color-accent-subtle)] border border-[var(--color-accent)]/20 flex items-center justify-center text-[var(--color-accent)]">
+            <Brain size={18} />
+          </div>
+          <span className="font-bold text-base text-[var(--color-text-primary)]">Persona</span>
         </div>
 
-        {/* Next */}
-        {current < slides.length - 1 ? (
+        <div className="flex items-center gap-4">
+          <ThemeToggle />
           <button
-            onClick={next}
-            aria-label="Next slide"
-            className="w-10 h-10 flex items-center justify-center rounded-full glass text-[var(--color-text-secondary)] hover:text-[var(--color-accent)] transition-all"
+            onClick={() => navigate("/app/library")}
+            className="text-xs text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] font-medium"
           >
-            <ArrowRight size={18} />
+            Skip
           </button>
-        ) : (
-          <div className="w-10" />
-        )}
+        </div>
+      </header>
+
+      {/* Main Step Container */}
+      <div className="flex-1 flex flex-col items-center justify-center px-6 py-8 relative z-10">
+        <div className="w-full max-w-xl">
+          {/* Progress Indicator */}
+          <div className="flex items-center justify-between mb-8 px-1">
+            <span className="text-xs font-mono font-bold text-[var(--color-accent)] uppercase tracking-wider">
+              Step 0{step} of 05
+            </span>
+            <div className="flex gap-1.5">
+              {[1, 2, 3, 4, 5].map((s) => (
+                <div
+                  key={s}
+                  className={clsx(
+                    "h-1.5 rounded-full transition-all duration-300",
+                    s === step
+                      ? "w-8 bg-[var(--color-accent)]"
+                      : s < step
+                      ? "w-4 bg-[var(--color-accent)]/40"
+                      : "w-2 bg-[var(--color-border)]"
+                  )}
+                />
+              ))}
+            </div>
+          </div>
+
+          <AnimatePresence mode="wait">
+            {step === 1 && (
+              <motion.div
+                key="step1"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="space-y-6"
+              >
+                <div>
+                  <h1 className="text-2xl sm:text-4xl font-extrabold text-[var(--color-text-primary)]">
+                    What brings you here?
+                  </h1>
+                  <p className="text-xs sm:text-sm text-[var(--color-text-secondary)] mt-1.5">
+                    Select your primary intention to customize your persona workspace.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 gap-3">
+                  {GOALS.map((g) => (
+                    <div
+                      key={g.id}
+                      onClick={() => setSelectedGoal(g.id)}
+                      className={clsx(
+                        "p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between",
+                        selectedGoal === g.id
+                          ? "bg-[var(--color-bg-elevated)] border-[var(--color-accent)] shadow-[var(--shadow-md)] ring-1 ring-[var(--color-accent)]/30"
+                          : "bg-[var(--color-bg-elevated)] border-[var(--color-border)] hover:border-[var(--color-border-strong)]"
+                      )}
+                    >
+                      <div>
+                        <h3 className="text-sm font-bold text-[var(--color-text-primary)]">{g.label}</h3>
+                        <p className="text-xs text-[var(--color-text-tertiary)] mt-0.5">{g.desc}</p>
+                      </div>
+                      {selectedGoal === g.id && (
+                        <div className="w-5 h-5 rounded-full bg-[var(--color-accent)] text-[var(--color-button-text)] flex items-center justify-center">
+                          <Check size={12} strokeWidth={3} />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+
+            {step === 2 && (
+              <motion.div
+                key="step2"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="space-y-6"
+              >
+                <div>
+                  <h1 className="text-2xl sm:text-4xl font-extrabold text-[var(--color-text-primary)]">
+                    What are you curious about?
+                  </h1>
+                  <p className="text-xs sm:text-sm text-[var(--color-text-secondary)] mt-1.5">
+                    Select the domain of knowledge you want to explore first.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {CATEGORIES.map((c) => (
+                    <div
+                      key={c.id}
+                      onClick={() => setSelectedCategory(c.id)}
+                      className={clsx(
+                        "p-5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between h-28",
+                        selectedCategory === c.id
+                          ? "bg-[var(--color-bg-elevated)] border-[var(--color-accent)] shadow-[var(--shadow-md)] ring-1 ring-[var(--color-accent)]/30"
+                          : "bg-[var(--color-bg-elevated)] border-[var(--color-border)] hover:border-[var(--color-border-strong)]"
+                      )}
+                    >
+                      <h3 className="text-sm font-bold text-[var(--color-text-primary)]">{c.label}</h3>
+                      {selectedCategory === c.id && (
+                        <div className="w-5 h-5 rounded-full bg-[var(--color-accent)] text-[var(--color-button-text)] flex items-center justify-center self-end">
+                          <Check size={12} strokeWidth={3} />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+
+            {step === 3 && (
+              <motion.div
+                key="step3"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="space-y-6"
+              >
+                <div>
+                  <h1 className="text-2xl sm:text-4xl font-extrabold text-[var(--color-text-primary)]">
+                    Choose minds to begin with.
+                  </h1>
+                  <p className="text-xs sm:text-sm text-[var(--color-text-secondary)] mt-1.5">
+                    Select one or more certified personas for your initial space.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {mockPersonas.map((p) => {
+                    const isSelected = selectedMinds.includes(p.id);
+                    return (
+                      <div
+                        key={p.id}
+                        onClick={() => toggleMind(p.id)}
+                        className={clsx(
+                          "p-4 rounded-2xl border transition-all cursor-pointer flex items-center gap-3.5",
+                          isSelected
+                            ? "bg-[var(--color-bg-elevated)] border-[var(--color-accent)] shadow-[var(--shadow-md)] ring-1 ring-[var(--color-accent)]/30"
+                            : "bg-[var(--color-bg-elevated)] border-[var(--color-border)] hover:border-[var(--color-border-strong)]"
+                        )}
+                      >
+                        <Avatar src={p.avatar} name={p.name} gradient={p.avatarGradient} size="md" />
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-xs font-bold text-[var(--color-text-primary)] truncate">{p.name}</h3>
+                          <p className="text-[11px] text-[var(--color-text-tertiary)] truncate">{p.tagline}</p>
+                        </div>
+                        {isSelected && (
+                          <div className="w-5 h-5 rounded-full bg-[var(--color-accent)] text-[var(--color-button-text)] flex items-center justify-center flex-shrink-0">
+                            <Check size={12} strokeWidth={3} />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </motion.div>
+            )}
+
+            {step === 4 && (
+              <motion.div
+                key="step4"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="space-y-6"
+              >
+                <div>
+                  <h1 className="text-2xl sm:text-4xl font-extrabold text-[var(--color-text-primary)]">
+                    Conversation preference
+                  </h1>
+                  <p className="text-xs sm:text-sm text-[var(--color-text-secondary)] mt-1.5">
+                    How would you like Persona models to structure their responses?
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 gap-3">
+                  {PREFERENCES.map((pref) => (
+                    <div
+                      key={pref.id}
+                      onClick={() => setSelectedPref(pref.id)}
+                      className={clsx(
+                        "p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between",
+                        selectedPref === pref.id
+                          ? "bg-[var(--color-bg-elevated)] border-[var(--color-accent)] shadow-[var(--shadow-md)] ring-1 ring-[var(--color-accent)]/30"
+                          : "bg-[var(--color-bg-elevated)] border-[var(--color-border)] hover:border-[var(--color-border-strong)]"
+                      )}
+                    >
+                      <div>
+                        <h3 className="text-sm font-bold text-[var(--color-text-primary)]">{pref.label}</h3>
+                        <p className="text-xs text-[var(--color-text-tertiary)] mt-0.5">{pref.desc}</p>
+                      </div>
+                      {selectedPref === pref.id && (
+                        <div className="w-5 h-5 rounded-full bg-[var(--color-accent)] text-[var(--color-button-text)] flex items-center justify-center">
+                          <Check size={12} strokeWidth={3} />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+
+            {step === 5 && (
+              <motion.div
+                key="step5"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="text-center space-y-6 py-6"
+              >
+                <div className="w-20 h-20 rounded-full bg-[var(--color-accent-subtle)] border border-[var(--color-accent)]/30 flex items-center justify-center text-[var(--color-accent)] mx-auto shadow-[var(--shadow-accent)]">
+                  <Sparkles size={36} />
+                </div>
+
+                <div className="space-y-2">
+                  <h1 className="text-3xl sm:text-4xl font-extrabold text-[var(--color-text-primary)]">
+                    Your space is ready.
+                  </h1>
+                  <p className="text-xs sm:text-sm text-[var(--color-text-secondary)] max-w-md mx-auto">
+                    Your personalized knowledge workspace has been configured with your selected minds and topic filters.
+                  </p>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Step Actions */}
+          <div className="mt-8 flex items-center justify-between pt-4 border-t border-[var(--color-border)]">
+            {step > 1 ? (
+              <button
+                onClick={handleBack}
+                className="flex items-center gap-1.5 text-xs font-semibold text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] cursor-pointer"
+              >
+                <ArrowLeft size={14} /> Back
+              </button>
+            ) : (
+              <div />
+            )}
+
+            {step < 5 ? (
+              <button
+                onClick={handleNext}
+                className="px-6 py-3 rounded-full bg-[var(--color-text-primary)] text-[var(--color-bg-base)] font-bold text-xs shadow-md hover:opacity-90 transition-all cursor-pointer flex items-center gap-1.5"
+              >
+                <span>Continue</span>
+                <ArrowRight size={14} />
+              </button>
+            ) : (
+              <button
+                onClick={handleComplete}
+                className="px-8 py-3.5 rounded-full bg-[var(--color-accent)] text-[var(--color-button-text)] font-bold text-xs shadow-lg hover:bg-[var(--color-accent-glow)] transition-all cursor-pointer flex items-center gap-2"
+              >
+                <span>Enter Persona Space</span>
+                <ChevronRight size={14} />
+              </button>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -64,7 +64,7 @@ export const mockPersonas = [
       "How do I handle doubt?",
     ],
     greeting:
-      "Hey! Really glad you stopped by. What's on your mind — let's talk it through.",
+      "Welcome. What would you like to explore today?",
   },
   {
     id: "persona-03",

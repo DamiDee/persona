@@ -1,5 +1,5 @@
-// Sidebar — persistent left sidebar for the App layout
-// Contains: persona switcher, new chat, recent chats list, settings strip
+// Sidebar.jsx — Slim persistent left navigation sidebar with global ThemeToggle integration
+// Light & Dark mode support, Lucide icons, zero emoji.
 
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -7,21 +7,21 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Plus,
   Settings,
-  MessageSquare,
   MoreHorizontal,
   Pencil,
   Trash2,
   ChevronLeft,
   ChevronRight,
   Crown,
+  Compass,
+  LogOut,
+  Brain,
 } from "lucide-react";
 import clsx from "clsx";
 import { Avatar } from "../ui/Avatar";
-import { Button } from "../ui/Button";
-import { Toggle } from "../ui/Toggle";
+import { ThemeToggle } from "../ui/ThemeToggle";
 import { useChatStore } from "../../store/useChatStore";
 import { useAuthStore } from "../../store/useAuthStore";
-import { useThemeStore } from "../../store/useThemeStore";
 import { groupChatsByDate } from "../../data/mockChats";
 import { getPersonaById, mockPersonas } from "../../data/mockPersonas";
 
@@ -42,14 +42,13 @@ function ChatRow({ chat, isActive, onSelect, onDelete, onRename }) {
   return (
     <div
       className={clsx(
-        "relative group flex items-center gap-2.5 px-3 py-2 rounded-[var(--radius-md)]",
+        "relative group flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-sans",
         "cursor-pointer transition-all duration-150",
         isActive
-          ? "bg-[var(--color-accent-subtle)] text-[var(--color-text-primary)]"
-          : "hover:bg-[var(--color-bg-tertiary)] text-[var(--color-text-secondary)]"
+          ? "bg-[var(--color-accent-subtle)] text-[var(--color-text-primary)] font-semibold border border-[var(--color-accent)]/20"
+          : "hover:bg-[var(--color-bg-tertiary)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
       )}
       onClick={() => !renaming && onSelect(chat.id)}
-      aria-current={isActive ? "page" : undefined}
       role="listitem"
     >
       <Avatar
@@ -68,17 +67,20 @@ function ChatRow({ chat, isActive, onSelect, onDelete, onRename }) {
             onBlur={handleRename}
             onKeyDown={(e) => {
               if (e.key === "Enter") handleRename();
-              if (e.key === "Escape") { setRenaming(false); setMenuOpen(false); }
+              if (e.key === "Escape") {
+                setRenaming(false);
+                setMenuOpen(false);
+              }
             }}
             onClick={(e) => e.stopPropagation()}
-            className="w-full bg-transparent text-[13px] text-[var(--color-text-primary)] outline-none border-b border-[var(--color-accent)]"
+            className="w-full bg-transparent text-xs text-[var(--color-text-primary)] outline-none border-b border-[var(--color-accent)]"
           />
         ) : (
-          <p className="text-[13px] truncate">{chat.title}</p>
+          <p className="truncate">{chat.title}</p>
         )}
       </div>
 
-      {/* 3-dot menu */}
+      {/* Options */}
       {!renaming && (
         <div className="relative">
           <button
@@ -87,11 +89,7 @@ function ChatRow({ chat, isActive, onSelect, onDelete, onRename }) {
               e.stopPropagation();
               setMenuOpen((o) => !o);
             }}
-            className={clsx(
-              "w-6 h-6 flex items-center justify-center rounded",
-              "text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)]",
-              "opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity duration-150"
-            )}
+            className="w-7 h-7 flex items-center justify-center rounded-lg text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-tertiary)] opacity-100 sm:opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity cursor-pointer"
           >
             <MoreHorizontal size={14} />
           </button>
@@ -99,24 +97,29 @@ function ChatRow({ chat, isActive, onSelect, onDelete, onRename }) {
           <AnimatePresence>
             {menuOpen && (
               <motion.div
-                initial={{ opacity: 0, scale: 0.92, y: -4 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.92, y: -4 }}
-                transition={{ duration: 0.15 }}
-                className="absolute right-0 top-8 z-30 glass-strong rounded-[var(--radius-md)] shadow-[var(--shadow-lg)] border border-[var(--color-border)] py-1 min-w-[140px]"
+                initial={{ opacity: 0, scale: 0.94 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.94 }}
+                className="absolute right-0 top-8 z-40 bg-[var(--color-bg-elevated)] border border-[var(--color-border)] rounded-xl shadow-xl py-1 min-w-[130px]"
                 onClick={(e) => e.stopPropagation()}
               >
                 <button
-                  onClick={() => { setRenaming(true); setMenuOpen(false); }}
-                  className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[var(--color-text-secondary)] hover:bg-[var(--color-accent-subtle)] hover:text-[var(--color-accent)] transition-colors"
+                  onClick={() => {
+                    setRenaming(true);
+                    setMenuOpen(false);
+                  }}
+                  className="flex items-center gap-2 w-full px-3 py-1.5 text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-tertiary)] transition-colors cursor-pointer"
                 >
-                  <Pencil size={13} /> Rename
+                  <Pencil size={12} /> Rename
                 </button>
                 <button
-                  onClick={() => { onDelete(chat.id); setMenuOpen(false); }}
-                  className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[var(--color-destructive)] hover:bg-[var(--color-destructive-subtle)] transition-colors"
+                  onClick={() => {
+                    onDelete(chat.id);
+                    setMenuOpen(false);
+                  }}
+                  className="flex items-center gap-2 w-full px-3 py-1.5 text-xs text-red-500 hover:bg-red-500/10 transition-colors cursor-pointer"
                 >
-                  <Trash2 size={13} /> Delete
+                  <Trash2 size={12} /> Delete
                 </button>
               </motion.div>
             )}
@@ -140,7 +143,6 @@ export function Sidebar({ collapsed, onToggleCollapse, onOpenLibrary }) {
     activePersonaId,
   } = useChatStore();
   const { user, logout } = useAuthStore();
-  const { theme, setTheme } = useThemeStore();
 
   const grouped = groupChatsByDate(conversations);
   const activePersona = mockPersonas.find((p) => p.id === activePersonaId);
@@ -164,88 +166,69 @@ export function Sidebar({ collapsed, onToggleCollapse, onOpenLibrary }) {
     navigate("/login");
   };
 
-  const isDark = theme === "dark" || (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
-
   if (collapsed) {
     return (
-      <motion.aside
-        initial={false}
-        animate={{ width: 72 }}
-        className="hidden lg:flex flex-col h-full glass-md border-r border-[var(--color-border)] py-4 px-2 gap-3 flex-shrink-0"
-        aria-label="Navigation sidebar (collapsed)"
-      >
-        {/* Expand button */}
+      <aside className="hidden lg:flex flex-col h-full bg-[var(--color-bg-secondary)] border-r border-[var(--color-border)] py-4 px-2.5 gap-4 flex-shrink-0 w-16 font-sans">
         <button
           onClick={onToggleCollapse}
           aria-label="Expand sidebar"
-          className="w-10 h-10 mx-auto flex items-center justify-center rounded-[var(--radius-md)] text-[var(--color-text-tertiary)] hover:bg-[var(--color-accent-subtle)] hover:text-[var(--color-accent)] transition-all"
+          className="w-10 h-10 mx-auto flex items-center justify-center rounded-xl text-[var(--color-text-tertiary)] hover:bg-[var(--color-bg-tertiary)] hover:text-[var(--color-text-primary)] transition-all cursor-pointer"
         >
           <ChevronRight size={18} />
         </button>
 
-        {/* New chat */}
         <button
           onClick={handleNewChat}
           aria-label="New chat"
-          className="w-10 h-10 mx-auto flex items-center justify-center rounded-[var(--radius-md)] bg-[var(--color-accent)] text-[var(--color-button-text)] transition-all hover:shadow-[var(--shadow-accent)]"
+          className="w-10 h-10 mx-auto flex items-center justify-center rounded-xl bg-[var(--color-text-primary)] text-[var(--color-bg-base)] hover:opacity-90 transition-all shadow-md cursor-pointer"
         >
           <Plus size={18} />
         </button>
 
         <div className="flex-1" />
 
-        {/* Settings */}
         <button
-          onClick={() => navigate("/app/settings")}
-          aria-label="Settings"
-          className="w-10 h-10 mx-auto flex items-center justify-center rounded-[var(--radius-md)] text-[var(--color-text-tertiary)] hover:bg-[var(--color-accent-subtle)] hover:text-[var(--color-accent)] transition-all"
+          onClick={() => navigate("/app/library")}
+          title="Persona Library"
+          className="w-10 h-10 mx-auto flex items-center justify-center rounded-xl text-[var(--color-text-tertiary)] hover:bg-[var(--color-bg-tertiary)] hover:text-[var(--color-text-primary)] transition-all cursor-pointer"
         >
-          <Settings size={16} />
+          <Compass size={18} />
         </button>
 
-        {/* User avatar */}
-        <Avatar
-          name={user?.name}
-          size="sm"
-          className="mx-auto cursor-pointer"
+        <button
           onClick={() => navigate("/app/settings")}
-        />
-      </motion.aside>
+          title="Settings"
+          className="w-10 h-10 mx-auto flex items-center justify-center rounded-xl text-[var(--color-text-tertiary)] hover:bg-[var(--color-bg-tertiary)] hover:text-[var(--color-text-primary)] transition-all cursor-pointer"
+        >
+          <Settings size={18} />
+        </button>
+
+        <Avatar name={user?.name} size="sm" className="mx-auto cursor-pointer" onClick={() => navigate("/app/settings")} />
+      </aside>
     );
   }
 
   return (
-    <motion.aside
-      initial={false}
-      animate={{ width: 280 }}
-      className="hidden lg:flex flex-col h-full glass-md border-r border-[var(--color-border)] flex-shrink-0"
-      aria-label="Navigation sidebar"
-    >
-      {/* Top: collapse + persona */}
-      <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-[var(--color-border)]">
+    <aside className="hidden lg:flex flex-col h-full bg-[var(--color-bg-secondary)] border-r border-[var(--color-border)] flex-shrink-0 w-64 font-sans">
+      {/* Persona Header */}
+      <div className="px-4 py-3.5 border-b border-[var(--color-border)] flex items-center justify-between">
         <div
-          className="flex items-center gap-2.5 cursor-pointer"
           onClick={onOpenLibrary}
-          role="button"
-          aria-label="Switch persona"
+          className="flex items-center gap-2.5 cursor-pointer group"
         >
           {activePersona ? (
-            <Avatar
-              src={activePersona.avatar}
-              name={activePersona.name}
-              gradient={activePersona.avatarGradient}
-              size="sm"
-              animated
-            />
+            <Avatar src={activePersona.avatar} name={activePersona.name} gradient={activePersona.avatarGradient} size="sm" animated />
           ) : (
-            <img src="/1.png" alt="Persona Logo" className="w-12 h-12 object-contain" />
+            <div className="w-8 h-8 rounded-xl bg-[var(--color-accent-subtle)] border border-[var(--color-accent)]/20 flex items-center justify-center text-[var(--color-accent)]">
+              <Brain size={16} />
+            </div>
           )}
           <div className="min-w-0">
-            <p className="text-[13px] font-semibold text-[var(--color-text-primary)] truncate">
+            <p className="text-xs font-bold text-[var(--color-text-primary)] truncate group-hover:text-[var(--color-accent)] transition-colors">
               {activePersona?.name || "Choose Persona"}
             </p>
-            <p className="text-[11px] text-[var(--color-text-tertiary)] truncate">
-              {activePersona?.tagline || "Select to start chatting"}
+            <p className="text-[10px] text-[var(--color-text-tertiary)] truncate">
+              {activePersona?.tagline || "Select a mind"}
             </p>
           </div>
         </div>
@@ -253,41 +236,51 @@ export function Sidebar({ collapsed, onToggleCollapse, onOpenLibrary }) {
         <button
           onClick={onToggleCollapse}
           aria-label="Collapse sidebar"
-          className="w-7 h-7 flex items-center justify-center rounded-[var(--radius-sm)] text-[var(--color-text-tertiary)] hover:bg-[var(--color-accent-subtle)] hover:text-[var(--color-accent)] transition-all flex-shrink-0"
+          className="w-8 h-8 flex items-center justify-center rounded-xl text-[var(--color-text-tertiary)] hover:bg-[var(--color-bg-tertiary)] hover:text-[var(--color-text-primary)] transition-all cursor-pointer"
         >
           <ChevronLeft size={16} />
         </button>
       </div>
 
-      {/* New chat button */}
-      <div className="px-3 py-3">
+      {/* New Conversation Action */}
+      <div className="p-3">
         <button
           onClick={handleNewChat}
-          className={clsx(
-            "w-full flex items-center gap-2 px-4 py-2.5 rounded-[var(--radius-md)]",
-            "bg-[var(--color-accent)] text-[var(--color-button-text)] font-medium text-[14px]",
-            "hover:shadow-[var(--shadow-accent)] transition-all duration-200",
-            "hover:bg-[var(--color-accent-glow)]"
-          )}
+          className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-[var(--color-text-primary)] text-[var(--color-bg-base)] font-bold text-xs shadow-md hover:opacity-90 transition-all cursor-pointer"
         >
-          <Plus size={16} />
-          New Chat
+          <Plus size={15} />
+          <span>New Conversation</span>
         </button>
       </div>
 
-      {/* Recent chats */}
-      <div className="flex-1 overflow-y-auto px-2 pb-2" role="list" aria-label="Recent conversations">
+      {/* Explore Navigation */}
+      <div className="px-3 pb-2 space-y-1">
+        <button
+          onClick={() => navigate("/app/library")}
+          className={clsx(
+            "w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs transition-colors cursor-pointer",
+            location.pathname.includes("/library")
+              ? "bg-[var(--color-accent-subtle)] text-[var(--color-accent)] font-bold"
+              : "text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-tertiary)] hover:text-[var(--color-text-primary)]"
+          )}
+        >
+          <Compass size={14} />
+          <span>Explore Personas</span>
+        </button>
+      </div>
+
+      {/* Recent Chats List */}
+      <div className="flex-1 overflow-y-auto px-3 py-2 space-y-4 no-scrollbar">
         {conversations.length === 0 ? (
-          <div className="flex flex-col items-center gap-2 py-8 px-4 text-center">
-            <MessageSquare size={24} className="text-[var(--color-text-tertiary)]" />
-            <p className="text-[13px] text-[var(--color-text-tertiary)]">
-              No conversations yet. Start a new chat!
-            </p>
+          <div className="py-8 text-center text-xs text-[var(--color-text-tertiary)]">
+            No recent conversations.
           </div>
         ) : (
           grouped.map(([label, chats]) => (
-            <div key={label} className="mb-4">
-              <p className="text-caption px-3 py-1.5">{label}</p>
+            <div key={label} className="space-y-1">
+              <p className="text-[10px] font-mono font-semibold uppercase tracking-wider text-[var(--color-text-tertiary)] px-3 py-1">
+                {label}
+              </p>
               {chats.map((chat) => (
                 <ChatRow
                   key={chat.id}
@@ -303,53 +296,49 @@ export function Sidebar({ collapsed, onToggleCollapse, onOpenLibrary }) {
         )}
       </div>
 
-      {/* Bottom strip */}
-      <div className="border-t border-[var(--color-border)] p-3 space-y-1">
-        {/* Upgrade prompt (if free) */}
+      {/* Footer Profile & Global ThemeToggle */}
+      <div className="p-3 border-t border-[var(--color-border)] space-y-2.5">
         {user?.plan !== "premium" && (
           <button
             onClick={() => navigate("/app/premium")}
-            className={clsx(
-              "w-full flex items-center gap-2.5 px-3 py-2 rounded-[var(--radius-md)]",
-              "bg-[var(--color-accent-subtle)] border border-[var(--color-accent)]/20",
-              "text-[var(--color-accent)] text-[13px] font-medium",
-              "hover:bg-[var(--color-accent-subtle-hover)] transition-colors duration-150"
-            )}
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-300 text-xs font-semibold hover:bg-amber-500/20 transition-colors cursor-pointer"
           >
-            <Crown size={14} />
-            Upgrade to Premium
+            <Crown size={13} />
+            <span>Upgrade to PRO</span>
           </button>
         )}
 
-        {/* Settings */}
-        <button
-          onClick={() => navigate("/app/settings")}
-          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-[var(--radius-md)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-tertiary)] hover:text-[var(--color-text-primary)] transition-colors duration-150"
-          aria-label="Settings"
-        >
-          <Settings size={15} />
-          <span className="text-[13px]">Settings</span>
-        </button>
 
-        {/* User */}
-        <div className="flex items-center gap-2.5 px-3 py-2">
-          <Avatar name={user?.name} size="sm" className="flex-shrink-0" />
-          <div className="flex-1 min-w-0">
-            <p className="text-[13px] text-[var(--color-text-primary)] truncate font-medium">
-              {user?.name || "Guest"}
-            </p>
-            <p className="text-[11px] text-[var(--color-text-tertiary)] truncate">
-              {user?.plan === "premium" ? "Premium" : "Free plan"}
-            </p>
+
+        {/* User Footer */}
+        <div className="flex items-center justify-between px-1 pt-1 border-t border-[var(--color-border)]">
+          <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/app/settings")}>
+            <Avatar name={user?.name} size="xs" />
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-[var(--color-text-primary)] truncate">{user?.name || "Guest"}</p>
+              <p className="text-[10px] text-[var(--color-text-tertiary)]">{user?.plan === "premium" ? "PRO User" : "Free Plan"}</p>
+            </div>
           </div>
-          <Toggle
-            checked={isDark}
-            onChange={(v) => setTheme(v ? "dark" : "light")}
-            id="sidebar-theme-toggle"
-          />
+
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => navigate("/app/settings")}
+              className="p-1.5 text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] transition-colors cursor-pointer"
+              title="Settings"
+            >
+              <Settings size={14} />
+            </button>
+            <button
+              onClick={handleLogout}
+              className="p-1.5 text-[var(--color-text-tertiary)] hover:text-red-500 transition-colors cursor-pointer"
+              title="Sign Out"
+            >
+              <LogOut size={14} />
+            </button>
+          </div>
         </div>
       </div>
-    </motion.aside>
+    </aside>
   );
 }
 
