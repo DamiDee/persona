@@ -1,7 +1,7 @@
 // PersonaLibrary.jsx — Editorial Character Selection Experience
 // Light-first theme support, responsive grid, zero emoji, Lucide icons.
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, X, BookOpen, MessageCircle, Lock, Compass } from "lucide-react";
@@ -91,9 +91,15 @@ export default function PersonaLibrary() {
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("all");
   const [selectedPersonaModal, setSelectedPersonaModal] = useState(null);
-  const { createNewChat } = useChatStore();
+  const { createNewChat, personas, syncPersonas } = useChatStore();
 
-  const filtered = mockPersonas.filter((p) => {
+  useEffect(() => {
+    syncPersonas();
+  }, [syncPersonas]);
+
+  const personaCatalog = personas?.length ? personas : mockPersonas;
+
+  const filtered = personaCatalog.filter((p) => {
     const matchesSearch =
       !search ||
       p.name.toLowerCase().includes(search.toLowerCase()) ||

@@ -1,8 +1,7 @@
 // ============================================================
-// PERSONA — Mock Persona Data
-// These are PLACEHOLDER / DEMO personas only.
-// Real persona training requires separate content licensing,
-// consent, and an ML pipeline — see README.md.
+// PERSONA — Persona Registry & Metadata
+// Maps frontend personas to Modal API LoRA adapters (e.g. "ajs")
+// and merges with live GET /v1/personas discovery.
 // ============================================================
 
 export const PERSONA_CATEGORIES = [
@@ -16,12 +15,15 @@ export const PERSONA_CATEGORIES = [
 export const mockPersonas = [
   {
     id: "persona-01",
+    apiPersonaId: "ajs",
+    adapterName: "ajs (LoRA · L40S)",
+    isLiveAdapter: true,
     name: "Joshua Selman",
     tagline: "Faith & Spiritual Growth",
     category: "faith",
     bio: "A voice dedicated to the pursuit of spiritual depth, kingdom principles, and the awakening of purpose in every believer. Known for a teaching style that bridges scripture with contemporary insight.",
     longBio:
-      "This is a demo persona. In production, this bio would draw from a corpus of publicly available sermons, teachings, and interviews — subject to appropriate licensing and consent. The conversation style reflected here is illustrative only.",
+      "Fine-tuned LoRA persona adapter ('ajs') served on Modal L40S GPU with vLLM. Trained on curated sermons, Koinonia teachings, and spiritual growth discourses with crisis guardrails and retrieval hooks.",
     sourceMaterial: [
       { type: "Sermons", count: 24 },
       { type: "Conferences", count: 8 },
@@ -32,22 +34,25 @@ export const mockPersonas = [
     avatarGradient: ["#0891b2", "#0e7490"],
     accentColor: "#06b6d4",
     suggestedPrompts: [
+      "How do I grow in prayer?",
       "What does it mean to walk in the Spirit?",
       "How do I discover my purpose?",
       "Explain the concept of grace in simple terms",
-      "What is spiritual intelligence?",
     ],
     greeting:
       "Peace to you. I'm glad you're here. What's on your heart today — what do you want to understand more deeply?",
   },
   {
     id: "persona-02",
+    apiPersonaId: "ajs",
+    adapterName: "femi-lazarus (via ajs)",
+    isLiveAdapter: false,
     name: "Femi Lazarus",
     tagline: "Modern Faith & Culture",
     category: "faith",
     bio: "A contemporary communicator who explores the intersection of faith, culture, and everyday life — making timeless truths feel urgently relevant to a generation navigating complexity.",
     longBio:
-      "This is a demo persona. In production, this bio would draw from a corpus of publicly available content — subject to appropriate licensing and consent. The conversation style reflected here is illustrative only.",
+      "Explores contemporary faith, spiritual discipline, and cultural discernment. Connects to the Modal serving pipeline when live inference is enabled.",
     sourceMaterial: [
       { type: "Sermons", count: 18 },
       { type: "Podcasts", count: 32 },
@@ -63,17 +68,19 @@ export const mockPersonas = [
       "Talk to me about identity and purpose",
       "How do I handle doubt?",
     ],
-    greeting:
-      "Welcome. What would you like to explore today?",
+    greeting: "Welcome. What would you like to explore today?",
   },
   {
     id: "persona-03",
+    apiPersonaId: "ajs",
+    adapterName: "myles-munroe",
+    isLiveAdapter: false,
     name: "Myles Munroe",
     tagline: "Leadership & Purpose",
     category: "leadership",
     bio: "A globally respected teacher on the subjects of leadership, potential, and kingdom principles. Famous for the conviction that every person carries dormant greatness, waiting to be unlocked.",
     longBio:
-      "This is a demo persona. In production, this bio would draw from a corpus of publicly available books, speeches, and interviews — subject to appropriate licensing and consent. The conversation style reflected here is illustrative only.",
+      "Focused on kingdom leadership, human potential, and purpose discovery. Powered by the Persona serving pipeline.",
     sourceMaterial: [
       { type: "Books", count: 6 },
       { type: "Lectures", count: 20 },
@@ -94,12 +101,15 @@ export const mockPersonas = [
   },
   {
     id: "persona-04",
+    apiPersonaId: "ajs",
+    adapterName: "chimamanda-adichie",
+    isLiveAdapter: false,
     name: "Chimamanda Adichie",
     tagline: "Literature & Voice",
     category: "literature",
     bio: "A celebrated author and thinker whose work explores the complexity of identity, gender, and the African experience with razor-sharp clarity and narrative warmth.",
     longBio:
-      "This is a demo persona. In production, this bio would draw from a corpus of publicly available essays, novels, and TED talks — subject to appropriate licensing and consent. The conversation style reflected here is illustrative only.",
+      "Explores narrative complexity, identity, and literature. Powered by the Persona serving pipeline.",
     sourceMaterial: [
       { type: "Novels", count: 3 },
       { type: "Essays", count: 8 },
@@ -121,7 +131,18 @@ export const mockPersonas = [
 ];
 
 export const getPersonaById = (id) =>
-  mockPersonas.find((p) => p.id === id) || null;
+  mockPersonas.find((p) => p.id === id || p.apiPersonaId === id) || null;
+
+export const resolveApiPersonaId = (personaOrId) => {
+  if (!personaOrId) return "ajs";
+  if (typeof personaOrId === "object") {
+    return personaOrId.apiPersonaId || personaOrId.id || "ajs";
+  }
+  const found = mockPersonas.find(
+    (p) => p.id === personaOrId || p.apiPersonaId === personaOrId
+  );
+  return found?.apiPersonaId || personaOrId || "ajs";
+};
 
 export const getFreePersonas = () =>
   mockPersonas.filter((p) => !p.isPremium);

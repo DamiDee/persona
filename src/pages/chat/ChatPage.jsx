@@ -1,4 +1,5 @@
-// ChatPage — the core experience
+// ChatPage — the core conversational experience
+// Calls POST /v1/warmup, GET /v1/personas, and GET /health when the chat page opens.
 
 import { useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
@@ -16,16 +17,29 @@ export default function ChatPage() {
     getActiveConversation,
     getActivePersona,
     activeConversationId,
+    warmupGpu,
+    syncPersonas,
+    checkHealth,
   } = useChatStore();
 
+  // Sync URL param with active conversation in store
   useEffect(() => {
     if (id && id !== activeConversationId) {
       setActiveConversation(id);
     }
   }, [id, activeConversationId, setActiveConversation]);
 
+  // Wake the Modal L40S GPU (POST /v1/warmup) and fetch personas (GET /v1/personas) when chat page opens
+  useEffect(() => {
+    checkHealth();
+    warmupGpu();
+    syncPersonas();
+  }, [checkHealth, warmupGpu, syncPersonas]);
+
   const conversation = getActiveConversation();
-  const persona = getActivePersona() || (conversation ? getPersonaById(conversation.personaId) : null);
+  const persona =
+    getActivePersona() ||
+    (conversation ? getPersonaById(conversation.personaId) : null);
 
   if (!conversation && id) {
     return (
@@ -35,7 +49,7 @@ export default function ChatPage() {
         </p>
         <button
           onClick={() => navigate("/app/library")}
-          className="flex items-center gap-2 text-[var(--color-accent)] hover:text-[var(--color-accent-glow)] transition-colors"
+          className="flex items-center gap-2 text-[var(--color-accent)] hover:text-[var(--color-accent-glow)] transition-colors cursor-pointer"
         >
           <ArrowLeft size={16} />
           Choose a Persona
@@ -48,7 +62,7 @@ export default function ChatPage() {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ duration: 0.25 }}
+      transition={{ duration: 0.22 }}
       className="h-full flex flex-col"
     >
       <ChatWindow persona={persona} conversation={conversation} />

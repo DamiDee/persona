@@ -17,14 +17,16 @@ import {
   LogOut,
   Brain,
   Search,
+  Cpu,
 } from "lucide-react";
 import clsx from "clsx";
 import { Avatar } from "../ui/Avatar";
 import { ProductLogo } from "../ui/ProductLogo";
+import { ThemeToggle } from "../ui/ThemeToggle";
 import { useChatStore } from "../../store/useChatStore";
 import { useAuthStore } from "../../store/useAuthStore";
 import { groupChatsByDate } from "../../data/mockChats";
-import { getPersonaById, mockPersonas } from "../../data/mockPersonas";
+import { getPersonaById } from "../../data/mockPersonas";
 
 function ChatRow({ chat, isActive, onSelect, onDelete, onRename }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -46,13 +48,14 @@ function ChatRow({ chat, isActive, onSelect, onDelete, onRename }) {
         "relative group flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-sans",
         "cursor-pointer transition-all duration-150",
         isActive
-          ? "bg-[var(--color-accent-subtle)] text-[var(--color-text-primary)] font-semibold border border-[var(--color-accent)]/20"
+          ? "bg-[var(--color-accent-subtle)] text-[var(--color-text-primary)] font-semibold border border-[var(--color-accent)]/25"
           : "hover:bg-[var(--color-bg-tertiary)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
       )}
       onClick={() => !renaming && onSelect(chat.id)}
       role="listitem"
     >
       <Avatar
+        src={persona?.avatar}
         name={persona?.name}
         gradient={persona?.avatarGradient}
         size="xs"
@@ -131,7 +134,12 @@ function ChatRow({ chat, isActive, onSelect, onDelete, onRename }) {
   );
 }
 
-export function Sidebar({ collapsed, onToggleCollapse, onOpenLibrary }) {
+export function Sidebar({
+  collapsed,
+  onToggleCollapse,
+  onOpenLibrary,
+  mobile = false,
+}) {
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
@@ -143,6 +151,8 @@ export function Sidebar({ collapsed, onToggleCollapse, onOpenLibrary }) {
     deleteChat,
     renameChat,
     activePersonaId,
+    personas,
+    setApiModalOpen,
   } = useChatStore();
   const { user, logout } = useAuthStore();
 
@@ -150,23 +160,26 @@ export function Sidebar({ collapsed, onToggleCollapse, onOpenLibrary }) {
     const query = searchQuery.trim().toLowerCase();
     if (!query) return true;
     const persona = getPersonaById(chat.personaId);
-    return `${chat.title} ${chat.lastMessage} ${persona?.name || ""}`.toLowerCase().includes(query);
+    return `${chat.title} ${chat.lastMessage} ${persona?.name || ""}`
+      .toLowerCase()
+      .includes(query);
   });
   const grouped = groupChatsByDate(filteredConversations);
-  const activePersona = mockPersonas.find((p) => p.id === activePersonaId);
+  const activePersona =
+    personas.find((p) => p.id === activePersonaId) ||
+    getPersonaById(activePersonaId);
 
   const handleSelectChat = (chatId) => {
     setActiveConversation(chatId);
     navigate(`/app/chat/${chatId}`);
+    if (mobile) onToggleCollapse?.();
   };
 
   const handleNewChat = () => {
-    if (activePersonaId) {
-      const chatId = createNewChat(activePersonaId);
-      navigate(`/app/chat/${chatId}`);
-    } else {
-      navigate("/app/library");
-    }
+    const targetPersonaId = activePersonaId || "persona-01";
+    const chatId = createNewChat(targetPersonaId);
+    navigate(`/app/chat/${chatId}`);
+    if (mobile) onToggleCollapse?.();
   };
 
   const handleLogout = async () => {
@@ -174,7 +187,7 @@ export function Sidebar({ collapsed, onToggleCollapse, onOpenLibrary }) {
     navigate("/login");
   };
 
-  if (collapsed) {
+  if (collapsed && !mobile) {
     return (
       <aside className="hidden lg:flex flex-col h-full bg-[var(--color-bg-secondary)] border-r border-[var(--color-border)] py-4 px-2.5 gap-4 flex-shrink-0 w-16 font-sans">
         <button
@@ -188,12 +201,20 @@ export function Sidebar({ collapsed, onToggleCollapse, onOpenLibrary }) {
         <button
           onClick={handleNewChat}
           aria-label="New chat"
-          className="w-10 h-10 mx-auto flex items-center justify-center rounded-xl bg-[var(--color-text-primary)] text-[var(--color-bg-base)] hover:opacity-90 transition-all shadow-md cursor-pointer"
+          className="w-10 h-10 mx-auto flex items-center justify-center rounded-xl bg-[var(--color-accent)] text-[var(--color-button-text)] hover:opacity-90 transition-all shadow-md cursor-pointer"
         >
           <Plus size={18} />
         </button>
 
         <div className="flex-1" />
+
+        <button
+          onClick={() => setApiModalOpen(true)}
+          title="Modal Serving API"
+          className="w-10 h-10 mx-auto flex items-center justify-center rounded-xl text-[var(--color-text-tertiary)] hover:bg-[var(--color-bg-tertiary)] hover:text-[var(--color-accent)] transition-all cursor-pointer"
+        >
+          <Cpu size={18} />
+        </button>
 
         <button
           onClick={() => navigate("/app/library")}
@@ -211,26 +232,43 @@ export function Sidebar({ collapsed, onToggleCollapse, onOpenLibrary }) {
           <Settings size={18} />
         </button>
 
-        <Avatar name={user?.name} size="sm" className="mx-auto cursor-pointer" onClick={() => navigate("/app/settings")} />
+        <Avatar
+          name={user?.name}
+          size="sm"
+          className="mx-auto cursor-pointer"
+          onClick={() => navigate("/app/settings")}
+        />
       </aside>
     );
   }
 
   return (
-    <aside className="hidden lg:flex flex-col h-full bg-[var(--color-bg-secondary)] border-r border-[var(--color-border)] flex-shrink-0 w-64 font-sans">
+    <aside
+      className={clsx(
+        "flex-col h-full bg-[var(--color-bg-secondary)] border-r border-[var(--color-border)] flex-shrink-0 font-sans",
+        mobile ? "flex w-full" : "hidden lg:flex w-64"
+      )}
+    >
       {/* Product Header */}
       <div className="px-4 py-3.5 border-b border-[var(--color-border)] flex items-center justify-between">
-        <button type="button" onClick={() => navigate("/")} aria-label="Go to Persona home" className="rounded-xl shadow-sm">
+        <button
+          type="button"
+          onClick={() => navigate("/")}
+          aria-label="Go to Persona home"
+          className="rounded-xl shadow-sm cursor-pointer"
+        >
           <ProductLogo compact />
         </button>
 
-        <button
-          onClick={onToggleCollapse}
-          aria-label="Collapse sidebar"
-          className="w-8 h-8 flex items-center justify-center rounded-xl text-[var(--color-text-tertiary)] hover:bg-[var(--color-bg-tertiary)] hover:text-[var(--color-text-primary)] transition-all cursor-pointer"
-        >
-          <ChevronLeft size={16} />
-        </button>
+        {!mobile && (
+          <button
+            onClick={onToggleCollapse}
+            aria-label="Collapse sidebar"
+            className="w-8 h-8 flex items-center justify-center rounded-xl text-[var(--color-text-tertiary)] hover:bg-[var(--color-bg-tertiary)] hover:text-[var(--color-text-primary)] transition-all cursor-pointer"
+          >
+            <ChevronLeft size={16} />
+          </button>
+        )}
       </div>
 
       {/* New Conversation Action */}
@@ -238,33 +276,51 @@ export function Sidebar({ collapsed, onToggleCollapse, onOpenLibrary }) {
         <button
           type="button"
           onClick={onOpenLibrary}
-          className="mb-2.5 w-full flex items-center gap-2.5 p-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-base)] text-left hover:border-[var(--color-border-strong)] transition-colors cursor-pointer"
+          className="mb-2.5 w-full flex items-center gap-2.5 p-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-base)] text-left hover:border-[var(--color-border-strong)] transition-colors cursor-pointer group"
         >
           {activePersona ? (
-            <Avatar src={activePersona.avatar} name={activePersona.name} gradient={activePersona.avatarGradient} size="sm" animated />
+            <Avatar
+              src={activePersona.avatar}
+              name={activePersona.name}
+              gradient={activePersona.avatarGradient}
+              size="sm"
+              animated
+            />
           ) : (
             <div className="w-8 h-8 rounded-xl bg-[var(--color-accent-subtle)] border border-[var(--color-accent)]/20 flex items-center justify-center text-[var(--color-accent)]">
               <Brain size={16} />
             </div>
           )}
-          <div className="min-w-0">
-            <p className="text-xs font-bold text-[var(--color-text-primary)] truncate group-hover:text-[var(--color-accent)] transition-colors">
-              {activePersona?.name || "Choose Persona"}
-            </p>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1.5">
+              <p className="text-xs font-bold text-[var(--color-text-primary)] truncate group-hover:text-[var(--color-accent)] transition-colors">
+                {activePersona?.name || "Choose Persona"}
+              </p>
+              {activePersona?.apiPersonaId && (
+                <span className="px-1.5 py-0.2 rounded bg-[var(--color-accent-subtle)] text-[var(--color-accent)] font-mono text-[9px] font-bold">
+                  {activePersona.apiPersonaId}
+                </span>
+              )}
+            </div>
             <p className="text-[10px] text-[var(--color-text-tertiary)] truncate">
               {activePersona?.tagline || "Select a mind"}
             </p>
           </div>
         </button>
+
         <button
           onClick={handleNewChat}
-          className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-[var(--color-text-primary)] text-[var(--color-bg-base)] font-bold text-xs shadow-md hover:opacity-90 transition-all cursor-pointer"
+          className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-[var(--color-accent)] hover:bg-[var(--color-accent-glow)] text-[var(--color-button-text)] font-bold text-xs shadow-sm transition-all cursor-pointer"
         >
           <Plus size={15} />
           <span>New Conversation</span>
         </button>
-        <label className="mt-2.5 h-10 px-3 rounded-xl bg-[var(--color-bg-base)] border border-[var(--color-border)] flex items-center gap-2 focus-within:border-[var(--color-accent)] transition-colors">
-          <Search size={13} className="shrink-0 text-[var(--color-text-tertiary)]" />
+
+        <label className="mt-2.5 h-9 px-3 rounded-xl bg-[var(--color-bg-base)] border border-[var(--color-border)] flex items-center gap-2 focus-within:border-[var(--color-accent)] transition-colors">
+          <Search
+            size={13}
+            className="shrink-0 text-[var(--color-text-tertiary)]"
+          />
           <input
             type="search"
             value={searchQuery}
@@ -278,7 +334,10 @@ export function Sidebar({ collapsed, onToggleCollapse, onOpenLibrary }) {
       {/* Explore Navigation */}
       <div className="px-3 pb-2 space-y-1">
         <button
-          onClick={() => navigate("/app/library")}
+          onClick={() => {
+            navigate("/app/library");
+            if (mobile) onToggleCollapse?.();
+          }}
           className={clsx(
             "w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs transition-colors cursor-pointer",
             location.pathname.includes("/library")
@@ -295,7 +354,9 @@ export function Sidebar({ collapsed, onToggleCollapse, onOpenLibrary }) {
       <div className="flex-1 overflow-y-auto px-3 py-2 space-y-4 no-scrollbar">
         {filteredConversations.length === 0 ? (
           <div className="py-8 text-center text-xs text-[var(--color-text-tertiary)]">
-            {searchQuery ? "No matching conversations." : "No recent conversations."}
+            {searchQuery
+              ? "No matching conversations."
+              : "No recent conversations."}
           </div>
         ) : (
           grouped.map(([label, chats]) => (
@@ -320,9 +381,18 @@ export function Sidebar({ collapsed, onToggleCollapse, onOpenLibrary }) {
 
       {/* Footer Profile & Global ThemeToggle */}
       <div className="p-3 border-t border-[var(--color-border)] space-y-2.5">
+        {mobile && (
+          <div className="flex justify-center pb-1">
+            <ThemeToggle className="w-full justify-center" />
+          </div>
+        )}
+
         {user?.plan !== "premium" && (
           <button
-            onClick={() => navigate("/app/premium")}
+            onClick={() => {
+              navigate("/app/premium");
+              if (mobile) onToggleCollapse?.();
+            }}
             className="w-full flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-300 text-xs font-semibold hover:bg-amber-500/20 transition-colors cursor-pointer"
           >
             <Crown size={13} />
@@ -330,21 +400,32 @@ export function Sidebar({ collapsed, onToggleCollapse, onOpenLibrary }) {
           </button>
         )}
 
-
-
         {/* User Footer */}
         <div className="flex items-center justify-between px-1 pt-1 border-t border-[var(--color-border)]">
-          <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/app/settings")}>
+          <div
+            className="flex items-center gap-2 cursor-pointer min-w-0"
+            onClick={() => {
+              navigate("/app/settings");
+              if (mobile) onToggleCollapse?.();
+            }}
+          >
             <Avatar name={user?.name} size="xs" />
             <div className="min-w-0">
-              <p className="text-xs font-medium text-[var(--color-text-primary)] truncate">{user?.name || "Guest"}</p>
-              <p className="text-[10px] text-[var(--color-text-tertiary)]">{user?.plan === "premium" ? "PRO User" : "Free Plan"}</p>
+              <p className="text-xs font-medium text-[var(--color-text-primary)] truncate">
+                {user?.name || "Guest"}
+              </p>
+              <p className="text-[10px] text-[var(--color-text-tertiary)]">
+                {user?.plan === "premium" ? "PRO User" : "Free Plan"}
+              </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 shrink-0">
             <button
-              onClick={() => navigate("/app/settings")}
+              onClick={() => {
+                navigate("/app/settings");
+                if (mobile) onToggleCollapse?.();
+              }}
               className="p-1.5 text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] transition-colors cursor-pointer"
               title="Settings"
             >
