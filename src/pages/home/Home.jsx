@@ -221,8 +221,8 @@ export default function Home() {
               <ShieldCheck size={16} />
             </span>
             <div>
-              <p className="!text-white text-xs font-bold">Citation ready</p>
-              <p className="!text-white/55 text-[10px]">Every answer can be traced</p>
+              <p className="!text-white text-xs font-bold">657 Sermons Grounded</p>
+              <p className="!text-white/55 text-[10px]">Authentic teachings &amp; deep wisdom</p>
             </div>
           </motion.div>
 

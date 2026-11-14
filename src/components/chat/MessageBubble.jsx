@@ -1,10 +1,9 @@
-// MessageBubble.jsx — Modern editorial message component with Markdown rendering,
-// Modal cold-start telemetry, crisis guardrail badge, and error recovery.
+// MessageBubble.jsx — iMessage & ChatGPT inspired conversational bubble component
+// Tactile squircle geometry, elevated glass surfaces, rich typography, and hidden citations.
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
-  BookOpen,
   Copy,
   Check,
   RotateCcw,
@@ -94,7 +93,7 @@ function FormattedMessageContent({ content }) {
           return (
             <blockquote
               key={bIdx}
-              className="pl-4 py-1.5 border-l-2 border-[var(--color-accent)] bg-[var(--color-accent-subtle)]/40 rounded-r-xl italic text-[var(--color-text-secondary)] font-serif text-[17px] leading-relaxed"
+              className="pl-4 py-2 border-l-[3px] border-[var(--color-accent)] bg-[var(--color-accent-subtle)]/50 rounded-r-2xl italic text-[var(--color-text-secondary)] font-serif text-[17px] leading-relaxed"
             >
               {renderInlineFormatting(quoteText)}
             </blockquote>
@@ -104,7 +103,7 @@ function FormattedMessageContent({ content }) {
         // Unordered list
         if (lines.every((l) => /^[-*•]\s+/.test(l.trim()))) {
           return (
-            <ul key={bIdx} className="space-y-1.5 pl-1">
+            <ul key={bIdx} className="space-y-2 pl-1">
               {lines.map((line, lIdx) => (
                 <li
                   key={lIdx}
@@ -133,7 +132,7 @@ function FormattedMessageContent({ content }) {
                     key={lIdx}
                     className="flex items-start gap-2.5 text-[15px] sm:text-[15.5px] leading-[1.72]"
                   >
-                    <span className="text-xs font-mono font-bold text-[var(--color-accent)] mt-1 shrink-0 min-w-[18px]">
+                    <span className="text-xs font-mono font-bold text-[var(--color-accent)] mt-1 shrink-0 min-w-[20px]">
                       {match ? `${match[1]}.` : `${lIdx + 1}.`}
                     </span>
                     <span className="flex-1">
@@ -152,7 +151,7 @@ function FormattedMessageContent({ content }) {
           return (
             <h4
               key={bIdx}
-              className="text-base sm:text-lg font-bold tracking-tight text-[var(--color-text-primary)] pt-1"
+              className="text-base sm:text-[17px] font-bold tracking-tight text-[var(--color-text-primary)] pt-1"
             >
               {renderInlineFormatting(headingText)}
             </h4>
@@ -162,7 +161,7 @@ function FormattedMessageContent({ content }) {
         return (
           <p
             key={bIdx}
-            className="whitespace-pre-wrap text-[15px] sm:text-[15.5px] leading-[1.76] text-[var(--color-text-primary)]"
+            className="whitespace-pre-wrap text-[15px] sm:text-[15.5px] leading-[1.75] text-[var(--color-text-primary)]"
           >
             {renderInlineFormatting(trimmed)}
           </p>
@@ -179,7 +178,9 @@ function StreamWaitingStatus({ persona }) {
   useEffect(() => {
     if (!streamStartedAt) return;
     const interval = setInterval(() => {
-      setElapsedSec(Math.max(0, Math.floor((Date.now() - streamStartedAt) / 1000)));
+      setElapsedSec(
+        Math.max(0, Math.floor((Date.now() - streamStartedAt) / 1000))
+      );
     }, 500);
     return () => clearInterval(interval);
   }, [streamStartedAt]);
@@ -188,23 +189,22 @@ function StreamWaitingStatus({ persona }) {
   const isColdStart = streamPhase === "cold_start" || elapsedSec >= 4;
 
   return (
-    <div className="py-2 px-1 space-y-2">
-      <div className="flex items-center gap-3">
+    <div className="py-1 space-y-2.5">
+      <div className="flex items-center gap-2.5">
         <TypingIndicator />
         <span className="text-xs font-medium text-[var(--color-text-secondary)]">
           {isColdStart
-            ? `Waking Modal L40S GPU (${apiSlug}) · ${elapsedSec}s elapsed`
-            : `Synthesizing response from ${persona?.name || "Persona"}...`}
+            ? `Waking Modal GPU (${apiSlug}) · ${elapsedSec}s`
+            : `${persona?.name || "Persona"} is thinking...`}
         </span>
       </div>
       {isColdStart && (
-        <div className="p-2.5 rounded-xl bg-[var(--color-accent-subtle)] border border-[var(--color-accent)]/20 text-[11px] text-[var(--color-text-secondary)] max-w-lg leading-relaxed">
+        <div className="p-3 rounded-2xl bg-[var(--color-accent-subtle)] border border-[var(--color-accent)]/20 text-[11px] text-[var(--color-text-secondary)] max-w-md leading-relaxed">
           <span className="font-bold text-[var(--color-accent)]">
-            Modal Cold Start Active:
+            Cold Start in Progress:
           </span>{" "}
-          The GPU scales to zero when idle. Cold starts take up to 3–4 minutes
-          while weights load; once warm, responses stream at ~27 tokens/s (~2s
-          latency).
+          Waking the dedicated GPU takes ~3–4 minutes when idle. Once warm,
+          replies stream in ~2 seconds.
         </div>
       )}
     </div>
@@ -215,7 +215,6 @@ export function MessageBubble({
   message,
   persona,
   isLastPersonaMessage,
-  onOpenSources,
   onRegenerate,
 }) {
   const [copied, setCopied] = useState(false);
@@ -227,7 +226,6 @@ export function MessageBubble({
 
   const isCrisisGuardrail =
     message.finishReason === "guardrail" || message.guardrail === "crisis";
-  const apiSlug = message.modelPersona || resolveApiPersonaId(persona);
 
   const handleCopy = async () => {
     if (!message.content) return;
@@ -236,7 +234,7 @@ export function MessageBubble({
       setCopied(true);
       addToast({
         title: "Copied to clipboard",
-        description: "Message content copied successfully.",
+        description: "Message copied.",
         type: "success",
       });
       setTimeout(() => setCopied(false), 2000);
@@ -251,59 +249,54 @@ export function MessageBubble({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: prefersReduced ? 0 : 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.25, ease: "easeOut" }}
+      initial={{ opacity: 0, y: prefersReduced ? 0 : 10, scale: prefersReduced ? 1 : 0.99 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.26, ease: [0.16, 1, 0.3, 1] }}
       className={clsx(
-        "flex items-start gap-3 sm:gap-4 group relative",
-        isUser ? "justify-end" : "justify-start"
+        "flex items-end gap-3 sm:gap-3.5 group relative",
+        isUser ? "justify-end" : "justify-start items-start"
       )}
     >
-      {/* Persona avatar */}
+      {/* Persona Avatar with active status dot */}
       {!isUser && (
-        <Avatar
-          src={persona?.avatar}
-          name={persona?.name}
-          gradient={persona?.avatarGradient}
-          size="sm"
-          animated={isLastPersonaMessage && isStreaming}
-          typing={isLastPersonaMessage && isStreaming}
-          className="flex-shrink-0 mt-0.5 shadow-sm"
-        />
+        <div className="relative flex-shrink-0 mt-1">
+          <Avatar
+            src={persona?.avatar}
+            name={persona?.name}
+            gradient={persona?.avatarGradient}
+            size="sm"
+            animated={isLastPersonaMessage && isStreaming}
+            typing={isLastPersonaMessage && isStreaming}
+            className="shadow-md ring-1 ring-black/5 dark:ring-white/10"
+          />
+          <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-[var(--color-bg-base)]" />
+        </div>
       )}
 
-      {/* Bubble Container */}
+      {/* Message Column */}
       <div
         className={clsx(
-          "flex flex-col gap-1.5",
+          "flex flex-col",
           isUser
-            ? "items-end max-w-[88%] sm:max-w-[74%] order-first"
-            : "items-start min-w-0 flex-1 max-w-[calc(100%-48px)] sm:max-w-[86%]"
+            ? "items-end max-w-[84%] sm:max-w-[70%]"
+            : "items-start min-w-0 flex-1 max-w-[calc(100%-46px)] sm:max-w-[84%]"
         )}
       >
-        {/* Persona Author Header */}
+        {/* Persona Name Header */}
         {!isUser && (
-          <div className="px-0.5 mb-0.5 flex items-center gap-2 flex-wrap">
-            <span className="text-xs font-bold text-[var(--color-text-primary)]">
-              {persona?.name || "Persona"}
-            </span>
-            <span className="px-1.5 py-0.5 rounded-md bg-[var(--color-bg-tertiary)] border border-[var(--color-border)] font-mono text-[10px] font-semibold text-[var(--color-accent)]">
-              {apiSlug}
+          <div className="px-1 mb-1.5 flex items-center gap-2 flex-wrap">
+            <span className="text-[13px] font-bold tracking-tight text-[var(--color-text-primary)]">
+              {persona?.name || "Joshua Selman"}
             </span>
             {isCrisisGuardrail ? (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-[10px] font-bold text-amber-500">
-                <ShieldAlert size={11} /> Safety Guardrail
-              </span>
-            ) : message.isDemoResponse ? (
-              <span className="text-[10px] font-medium text-[var(--color-text-tertiary)]">
-                Simulated preview
+                <ShieldAlert size={11} /> Safety Support
               </span>
             ) : (
-              <span className="text-[10px] font-medium text-[var(--color-text-tertiary)] flex items-center gap-1">
-                <span className="w-1 h-1 rounded-full bg-emerald-500" />
-                {message.usedContext
-                  ? "Grounded with RAG context"
-                  : "Fine-tuned Persona response"}
+              <span className="text-[11px] font-medium text-[var(--color-text-tertiary)]">
+                {persona?.id === "persona-01" || !persona
+                  ? "Grounded in 657 sermons"
+                  : persona?.tagline}
               </span>
             )}
           </div>
@@ -311,7 +304,7 @@ export function MessageBubble({
 
         {/* Crisis Guardrail Callout Banner */}
         {!isUser && isCrisisGuardrail && (
-          <div className="w-full p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-2.5 text-xs text-amber-600 dark:text-amber-300">
+          <div className="w-full mb-2 p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-2.5 text-xs text-amber-600 dark:text-amber-300">
             <ShieldAlert size={16} className="shrink-0 mt-0.5" />
             <div className="leading-relaxed">
               <span className="font-bold">Crisis Guardrail Response:</span> This
@@ -321,26 +314,24 @@ export function MessageBubble({
           </div>
         )}
 
-        {/* Error / Auth Required State */}
+        {/* Error / Auth Required Recovery Card */}
         {!isUser && message.isError ? (
-          <div className="w-full p-4 rounded-2xl bg-[var(--color-bg-elevated)] border border-[var(--color-border-strong)] shadow-sm space-y-3">
-            <div className="flex items-start gap-2.5">
+          <div className="w-full p-4 sm:p-5 rounded-[24px] rounded-tl-[6px] bg-[var(--color-bg-elevated)] border border-[var(--color-border-strong)] shadow-md space-y-3.5">
+            <div className="flex items-start gap-3">
               {message.isAuthError ? (
-                <KeyRound
-                  size={17}
-                  className="text-[var(--color-accent)] shrink-0 mt-0.5"
-                />
+                <div className="w-8 h-8 rounded-xl bg-[var(--color-accent-subtle)] text-[var(--color-accent)] flex items-center justify-center shrink-0">
+                  <KeyRound size={16} />
+                </div>
               ) : (
-                <AlertCircle
-                  size={17}
-                  className="text-amber-500 shrink-0 mt-0.5"
-                />
+                <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center shrink-0">
+                  <AlertCircle size={16} />
+                </div>
               )}
               <div className="space-y-1">
-                <p className="text-xs font-bold text-[var(--color-text-primary)]">
+                <p className="text-xs sm:text-sm font-bold text-[var(--color-text-primary)]">
                   {message.isAuthError
-                    ? "Modal Serving API Authentication Required"
-                    : "Unable to Reach Modal Serving Endpoint"}
+                    ? "API Key Required for Live GPU Streaming"
+                    : "Connection Interrupted"}
                 </p>
                 <p className="text-xs text-[var(--color-text-secondary)] leading-relaxed">
                   {message.errorMessage}
@@ -352,10 +343,10 @@ export function MessageBubble({
               <button
                 type="button"
                 onClick={() => setApiModalOpen(true)}
-                className="px-3 py-1.5 rounded-xl bg-[var(--color-accent)] hover:bg-[var(--color-accent-glow)] text-[var(--color-button-text)] text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
+                className="px-3.5 py-2 rounded-full bg-[var(--color-accent)] hover:bg-[var(--color-accent-glow)] text-[var(--color-button-text)] text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
               >
                 <KeyRound size={12} />
-                <span>Configure CHAT_API_KEY</span>
+                <span>Connect API Key</span>
               </button>
 
               {onRegenerate && (
@@ -363,48 +354,60 @@ export function MessageBubble({
                   <button
                     type="button"
                     onClick={() => onRegenerate({ forceDemo: false })}
-                    className="px-3 py-1.5 rounded-xl bg-[var(--color-bg-tertiary)] hover:bg-[var(--color-border)] border border-[var(--color-border)] text-xs font-semibold text-[var(--color-text-primary)] flex items-center gap-1.5 transition-colors cursor-pointer"
+                    className="px-3.5 py-2 rounded-full bg-[var(--color-bg-tertiary)] hover:bg-[var(--color-border)] border border-[var(--color-border)] text-xs font-semibold text-[var(--color-text-primary)] flex items-center gap-1.5 transition-colors cursor-pointer"
                   >
                     <RotateCcw size={12} />
-                    <span>Retry Live API</span>
+                    <span>Retry</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => onRegenerate({ forceDemo: true })}
-                    className="px-3 py-1.5 rounded-xl bg-[var(--color-bg-tertiary)] hover:bg-[var(--color-border)] border border-[var(--color-border)] text-xs font-semibold text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] flex items-center gap-1.5 transition-colors cursor-pointer"
+                    className="px-3.5 py-2 rounded-full bg-[var(--color-bg-tertiary)] hover:bg-[var(--color-border)] border border-[var(--color-border)] text-xs font-semibold text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] flex items-center gap-1.5 transition-colors cursor-pointer"
                   >
                     <Sparkles size={12} className="text-[var(--color-accent)]" />
-                    <span>Simulate Demo Reply</span>
+                    <span>Simulate Reply</span>
                   </button>
                 </>
               )}
             </div>
           </div>
-        ) : (
-          /* Normal Message Content */
+        ) : isUser ? (
+          /* iMessage-style User Bubble */
           <div
             className={clsx(
-              "transition-all duration-200 font-sans",
-              isUser
-                ? "px-4 py-3 rounded-[22px] rounded-br-md bg-[var(--color-bg-elevated)] text-[var(--color-text-primary)] border border-[var(--color-border-strong)] shadow-sm text-[15px] leading-[1.65] font-medium"
-                : "w-full text-[var(--color-text-primary)] py-1 px-0.5"
+              "relative px-4.5 py-3 sm:px-5 sm:py-3.5 rounded-[24px] rounded-br-[6px]",
+              "bg-gradient-to-br from-[#0891b2] via-[#0284c7] to-[#0e7490] dark:from-[#06b6d4] dark:via-[#0891b2] dark:to-[#0e7490]",
+              "!text-white border border-white/15",
+              "shadow-[0_10px_26px_-6px_rgba(8,145,178,0.42),inset_0_1px_0_rgba(255,255,255,0.28)]",
+              "text-[15px] sm:text-[15.5px] leading-[1.6] font-medium tracking-[-0.005em] transition-all duration-200"
+            )}
+          >
+            <p className="whitespace-pre-wrap !text-white selection:bg-white/25 selection:text-white">
+              {message.content}
+            </p>
+          </div>
+        ) : (
+          /* ChatGPT + iMessage Refined Assistant Bubble Card */
+          <div
+            className={clsx(
+              "relative w-full px-5 py-4 sm:px-6 sm:py-5 rounded-[24px] rounded-tl-[6px]",
+              "bg-[var(--color-bg-elevated)] border border-[var(--color-border-strong)]/80",
+              "shadow-[0_8px_30px_-8px_rgba(15,23,42,0.07),inset_0_1px_0_rgba(255,255,255,0.06)]",
+              "dark:shadow-[0_14px_36px_-10px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,255,255,0.04)]",
+              "text-[var(--color-text-primary)] transition-all duration-200"
             )}
           >
             {isStreaming && !message.content ? (
               <StreamWaitingStatus persona={persona} />
-            ) : isUser ? (
-              <p className="whitespace-pre-wrap text-[var(--color-text-primary)]">
-                {message.content}
-              </p>
             ) : (
               <div className="relative">
                 <FormattedMessageContent content={message.content} />
                 {isStreaming && message.content && (
                   <motion.span
-                    animate={prefersReduced ? {} : { opacity: [1, 0.15, 1] }}
-                    transition={{ duration: 0.8, repeat: Infinity }}
-                    className="inline-block w-1.5 h-4 rounded-sm bg-[var(--color-accent)] ml-1 align-middle"
+                    animate={prefersReduced ? {} : { opacity: [1, 0.2, 1] }}
+                    transition={{ duration: 0.75, repeat: Infinity }}
+                    className="inline-block w-2 h-4 rounded-full bg-[var(--color-accent)] ml-1.5 align-middle"
                     aria-hidden="true"
                   />
                 )}
@@ -413,88 +416,72 @@ export function MessageBubble({
           </div>
         )}
 
-        {/* Grounded Source References, Telemetry & Action Toolbar */}
+        {/* Assistant Action Bar (ChatGPT-style clean icon bar, citations hidden) */}
         {!isUser && !isStreaming && message.content && !message.isError && (
-          <div className="flex items-center gap-2 px-0.5 pt-1.5 flex-wrap">
-            {persona?.sourceMaterial && (
-              <button
-                type="button"
-                onClick={onOpenSources}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[var(--color-bg-elevated)] border border-[var(--color-border)] hover:border-[var(--color-accent)] text-[10px] font-bold text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-all cursor-pointer"
-              >
-                <BookOpen size={11} className="text-[var(--color-accent)]" />
-                <span>
-                  {message.usedContext
-                    ? "Retrieved Corpus Context"
-                    : `Grounded in ${persona.sourceMaterial[0]?.count || 24} ${
-                        persona.sourceMaterial[0]?.type || "Sources"
-                      }`}
-                </span>
-              </button>
-            )}
-
-            {message.tokensPerSec && (
-              <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-[var(--color-bg-secondary)] border border-[var(--color-border)] text-[10px] font-mono text-[var(--color-text-tertiary)]">
-                <Zap size={10} className="text-[var(--color-accent)]" />
-                {message.tokensPerSec} tok/s
-                {message.ttftMs
-                  ? ` · ${(message.ttftMs / 1000).toFixed(1)}s TTFT`
-                  : ""}
-              </span>
-            )}
-
-            {/* Action Buttons Toolbar */}
-            <div className="flex items-center gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
-              <button
-                type="button"
-                onClick={handleCopy}
-                aria-label="Copy message text"
-                title="Copy text"
-                className="p-1.5 rounded-lg text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-tertiary)] transition-colors cursor-pointer"
-              >
-                {copied ? (
-                  <Check size={13} className="text-emerald-500" />
-                ) : (
-                  <Copy size={13} />
-                )}
-              </button>
-
-              {isLastPersonaMessage && onRegenerate && (
-                <button
-                  type="button"
-                  onClick={() => onRegenerate()}
-                  aria-label="Regenerate AI response"
-                  title="Regenerate response"
-                  className="p-1.5 rounded-lg text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-tertiary)] transition-colors cursor-pointer"
-                >
-                  <RotateCcw size={13} />
-                </button>
-              )}
-
-              <span className="text-[11px] text-[var(--color-text-tertiary)] ml-1">
-                {formatTime(message.timestamp)}
-              </span>
-            </div>
-          </div>
-        )}
-
-        {/* User Message Action Toolbar & Timestamp */}
-        {isUser && (
-          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity px-1">
+          <div className="flex items-center gap-1.5 px-1.5 pt-1.5">
             <button
               type="button"
               onClick={handleCopy}
               aria-label="Copy message text"
-              title="Copy text"
-              className="p-1 rounded text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-tertiary)] transition-colors cursor-pointer"
+              title="Copy response"
+              className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-tertiary)] transition-colors cursor-pointer"
             >
               {copied ? (
-                <Check size={12} className="text-emerald-500" />
+                <>
+                  <Check size={12} className="text-emerald-500" />
+                  <span className="text-emerald-500">Copied</span>
+                </>
               ) : (
-                <Copy size={12} />
+                <>
+                  <Copy size={12} />
+                  <span>Copy</span>
+                </>
               )}
             </button>
-            <span className="text-[10px] text-[var(--color-text-tertiary)]">
+
+            {isLastPersonaMessage && onRegenerate && (
+              <button
+                type="button"
+                onClick={() => onRegenerate()}
+                aria-label="Regenerate response"
+                title="Regenerate response"
+                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-tertiary)] transition-colors cursor-pointer"
+              >
+                <RotateCcw size={12} />
+                <span>Regenerate</span>
+              </button>
+            )}
+
+            {message.tokensPerSec && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono text-[var(--color-text-tertiary)]">
+                <Zap size={10} className="text-[var(--color-accent)]" />
+                {message.tokensPerSec} tok/s
+              </span>
+            )}
+
+            <span className="text-[11px] text-[var(--color-text-tertiary)]/80 ml-1">
+              {formatTime(message.timestamp)}
+            </span>
+          </div>
+        )}
+
+        {/* User Message Subtle Footer */}
+        {isUser && (
+          <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity px-1.5 pt-1">
+            <button
+              type="button"
+              onClick={handleCopy}
+              aria-label="Copy message text"
+              title="Copy message"
+              className="p-1 rounded-md text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-tertiary)] transition-colors cursor-pointer"
+            >
+              {copied ? (
+                <Check size={11} className="text-emerald-500" />
+              ) : (
+                <Copy size={11} />
+              )}
+            </button>
+            <span className="text-[10px] font-medium text-[var(--color-text-tertiary)]">
               {formatTime(message.timestamp)}
             </span>
           </div>

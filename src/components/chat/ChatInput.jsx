@@ -1,4 +1,4 @@
-// ChatInput.jsx — Modern composer with Stop Generation, Voice input, Adapter pill, and Source attachment
+// ChatInput.jsx — Modern composer with Stop Generation, Voice input, and 657 Sermons grounding badge
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
@@ -7,7 +7,6 @@ import {
   BookOpen,
   Cpu,
   Mic,
-  Paperclip,
   Square,
   Sparkles,
 } from "lucide-react";
@@ -22,10 +21,9 @@ const LINE_HEIGHT = 24;
 export function ChatInput({
   onSend,
   onStop,
-  onOpenSources,
   disabled,
   persona,
-  sourceCount = 0,
+  sourceCount = 657,
 }) {
   const [value, setValue] = useState("");
   const [isListening, setIsListening] = useState(false);
@@ -35,6 +33,7 @@ export function ChatInput({
   const { apiMode, warmupStatus, setApiModalOpen } = useChatStore();
 
   const apiSlug = resolveApiPersonaId(persona);
+  const isSelman = !persona || persona.id === "persona-01" || apiSlug === "ajs";
 
   const resize = useCallback(() => {
     const textarea = textareaRef.current;
@@ -116,9 +115,9 @@ export function ChatInput({
   return (
     <div
       className={clsx(
-        "composer-aura rounded-[24px] border bg-[var(--color-bg-elevated)] shadow-[0_12px_40px_rgba(15,23,42,0.10)] transition-all duration-200",
+        "composer-aura rounded-[26px] border bg-[var(--color-bg-elevated)] shadow-[0_14px_44px_-8px_rgba(15,23,42,0.12)] transition-all duration-200",
         isFocused
-          ? "border-[var(--color-accent)] ring-4 ring-[var(--color-accent-subtle)]"
+          ? "border-[var(--color-accent)]"
           : "border-[var(--color-border-strong)] hover:border-[var(--color-border-hover)]"
       )}
     >
@@ -129,27 +128,27 @@ export function ChatInput({
         onKeyDown={handleKeyDown}
         onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(false)}
-        placeholder={`Ask ${persona?.name || "Persona"} anything...`}
+        placeholder={`Ask ${persona?.name || "Joshua Selman"} a question...`}
         rows={1}
         className={clsx(
-          "block w-full min-h-[56px] bg-transparent px-4 sm:px-5 pt-3.5 pb-2 text-[15px] leading-6 resize-none outline-none font-sans text-[var(--color-text-primary)]",
+          "block w-full min-h-[54px] bg-transparent px-5 pt-4 pb-2 text-[15px] sm:text-[15.5px] leading-6 resize-none outline-none font-sans text-[var(--color-text-primary)]",
           "placeholder:text-[var(--color-text-tertiary)] max-h-[168px]"
         )}
         style={{ lineHeight: `${LINE_HEIGHT}px` }}
-        aria-label={`Message ${persona?.name || "Persona"}`}
+        aria-label={`Message ${persona?.name || "Joshua Selman"}`}
       />
 
-      <div className="px-3 pb-2.5 flex items-center justify-between gap-2">
-        <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
-          <button
-            type="button"
-            onClick={onOpenSources}
-            aria-label="Attach a source"
-            title="Attach or inspect sources"
-            className="w-8 h-8 shrink-0 flex items-center justify-center rounded-full text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-tertiary)] transition-colors cursor-pointer"
-          >
-            <Paperclip size={15} />
-          </button>
+      <div className="px-3.5 pb-3 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 min-w-0 flex-wrap">
+          {/* Grounded in 657 Sermons Badge */}
+          <span className="inline-flex min-w-0 items-center gap-1.5 px-2.5 py-1 rounded-full bg-[var(--color-bg-tertiary)] border border-[var(--color-border)] text-[10px] font-semibold text-[var(--color-text-secondary)]">
+            <BookOpen size={11} className="shrink-0 text-[var(--color-accent)]" />
+            <span className="truncate">
+              {isSelman
+                ? "Grounded in 657 sermons"
+                : `Grounded in ${sourceCount} works`}
+            </span>
+          </span>
 
           {/* Adapter / Engine Status Pill */}
           <button
@@ -180,22 +179,9 @@ export function ChatInput({
               </>
             )}
           </button>
-
-          <button
-            type="button"
-            onClick={onOpenSources}
-            className="hidden sm:inline-flex min-w-0 items-center gap-1.5 px-2.5 py-1 rounded-full bg-[var(--color-bg-tertiary)] border border-[var(--color-border)] text-[10px] font-semibold text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors cursor-pointer"
-          >
-            <BookOpen size={11} className="shrink-0 text-[var(--color-accent)]" />
-            <span className="truncate">{sourceCount} sources</span>
-          </button>
         </div>
 
         <div className="flex items-center gap-1.5 shrink-0">
-          <span className="hidden md:inline text-[10px] font-mono text-[var(--color-text-tertiary)] mr-1 select-none">
-            {disabled ? "Streaming..." : "Enter ↵"}
-          </span>
-
           <button
             type="button"
             onClick={handleVoiceToggle}
@@ -235,7 +221,7 @@ export function ChatInput({
                 "w-9 h-9 flex items-center justify-center rounded-full transition-all duration-200 cursor-pointer",
                 isEmpty || disabled
                   ? "bg-[var(--color-bg-tertiary)] text-[var(--color-text-tertiary)] cursor-not-allowed"
-                  : "bg-[var(--color-accent)] hover:bg-[var(--color-accent-glow)] text-[var(--color-button-text)] shadow-md"
+                  : "bg-gradient-to-br from-[#0891b2] to-[#0e7490] dark:from-[#22d3ee] dark:to-[#0891b2] text-white dark:text-slate-950 shadow-md"
               )}
             >
               <ArrowUp size={16} strokeWidth={2.5} />

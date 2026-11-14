@@ -18,16 +18,15 @@ export const mockPersonas = [
     apiPersonaId: "ajs",
     adapterName: "ajs (LoRA · L40S)",
     isLiveAdapter: true,
+    isPrimary: true,
     name: "Joshua Selman",
     tagline: "Faith & Spiritual Growth",
     category: "faith",
-    bio: "A voice dedicated to the pursuit of spiritual depth, kingdom principles, and the awakening of purpose in every believer. Known for a teaching style that bridges scripture with contemporary insight.",
+    bio: "A voice dedicated to the pursuit of spiritual depth, kingdom principles, and the awakening of purpose in every believer. Grounded in 657 sermons bridging scripture with contemporary insight.",
     longBio:
-      "Fine-tuned LoRA persona adapter ('ajs') served on Modal L40S GPU with vLLM. Trained on curated sermons, Koinonia teachings, and spiritual growth discourses with crisis guardrails and retrieval hooks.",
+      "Fine-tuned LoRA persona adapter ('ajs') served on Modal L40S GPU with vLLM. Grounded in 657 curated sermons, Koinonia teachings, and spiritual growth discourses.",
     sourceMaterial: [
-      { type: "Sermons", count: 24 },
-      { type: "Conferences", count: 8 },
-      { type: "Interviews", count: 12 },
+      { type: "Sermons", count: 657 },
     ],
     isPremium: false,
     avatar: "/avatar-selman.png",
@@ -40,7 +39,7 @@ export const mockPersonas = [
       "Explain the concept of grace in simple terms",
     ],
     greeting:
-      "Peace to you. I'm glad you're here. What's on your heart today — what do you want to understand more deeply?",
+      "Peace to you. What is on your heart today — what would you like to understand more deeply?",
   },
   {
     id: "persona-02",

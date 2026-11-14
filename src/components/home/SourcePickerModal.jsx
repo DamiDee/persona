@@ -336,7 +336,7 @@ export default function SourcePickerModal({ isOpen, onClose, initialTab = "pdf",
                       value={urlInput}
                       onChange={(e) => setUrlInput(e.target.value)}
                       placeholder="https://example.com/research-paper"
-                      className="w-full bg-zinc-900 border border-zinc-800 rounded-xl pl-9 pr-4 py-2.5 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition-all"
+                      className="w-full bg-zinc-900 border border-zinc-800 rounded-xl pl-9 pr-4 py-2.5 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-cyan-400 transition-all"
                     />
                   </div>
                   <button

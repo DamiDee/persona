@@ -1,4 +1,4 @@
-// ChatWindow.jsx — Modern, editorial chat workspace connected to the Modal Persona Serving API
+// ChatWindow.jsx — Modern, ChatGPT & iMessage-inspired chat workspace connected to the Modal Persona Serving API
 
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -7,7 +7,6 @@ import {
   ArrowUpRight,
   BookOpen,
   Compass,
-  Cpu,
   Flame,
   GitCompareArrows,
   MessageSquarePlus,
@@ -21,7 +20,6 @@ import { MessageBubble } from "./MessageBubble";
 import { ChatInput } from "./ChatInput";
 import { PersonaInspectorDrawer } from "./PersonaInspectorDrawer";
 import { ApiConnectionModal } from "./ApiConnectionModal";
-import SourcePickerModal from "../home/SourcePickerModal";
 import { Avatar } from "../ui/Avatar";
 import { useChatStore } from "../../store/useChatStore";
 import { resolveApiPersonaId } from "../../data/mockPersonas";
@@ -37,7 +35,6 @@ const STARTER_MODES = [
 export function ChatWindow({ persona, conversation }) {
   const bottomRef = useRef(null);
   const containerRef = useRef(null);
-  const [isSourceModalOpen, setIsSourceModalOpen] = useState(false);
   const [showScrollBottom, setShowScrollBottom] = useState(false);
 
   const {
@@ -61,8 +58,9 @@ export function ChatWindow({ persona, conversation }) {
   const lastMsgContent = messages[messages.length - 1]?.content || "";
   const sourceCount =
     persona?.sourceMaterial?.reduce((total, source) => total + source.count, 0) ||
-    0;
+    657;
   const apiSlug = resolveApiPersonaId(persona);
+  const isSelman = !persona || persona.id === "persona-01" || apiSlug === "ajs";
 
   // Track scroll position for "Jump to bottom" button and smooth auto-scroll during streaming
   useEffect(() => {
@@ -134,8 +132,11 @@ export function ChatWindow({ persona, conversation }) {
               <h2 className="text-xs sm:text-sm font-bold text-[var(--color-text-primary)] truncate">
                 {conversation?.title || `Conversation with ${persona?.name}`}
               </h2>
-              <span className="hidden md:inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[var(--color-bg-secondary)] border border-[var(--color-border)] font-mono text-[10px] text-[var(--color-text-tertiary)]">
-                /v1/chat · {apiSlug}
+              <span className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[var(--color-bg-secondary)] border border-[var(--color-border)] text-[10px] font-semibold text-[var(--color-text-tertiary)]">
+                <BookOpen size={10} className="text-[var(--color-accent)]" />
+                {isSelman
+                  ? "Grounded in 657 sermons"
+                  : `Grounded in ${sourceCount} works`}
               </span>
             </div>
 
@@ -155,15 +156,6 @@ export function ChatWindow({ persona, conversation }) {
 
               <button
                 type="button"
-                onClick={() => setIsSourceModalOpen(true)}
-                className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] hover:border-[var(--color-border-strong)] text-[11px] font-semibold text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors cursor-pointer"
-              >
-                <BookOpen size={12} className="text-[var(--color-accent)]" />
-                <span>{sourceCount} sources</span>
-              </button>
-
-              <button
-                type="button"
                 onClick={togglePersonaInfo}
                 className={clsx(
                   "inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-[11px] font-semibold transition-colors cursor-pointer",
@@ -174,7 +166,7 @@ export function ChatWindow({ persona, conversation }) {
                 title="Toggle Mind & Pipeline Inspector"
               >
                 <PanelRight size={13} />
-                <span className="hidden md:inline">Inspector</span>
+                <span className="hidden md:inline">About</span>
               </button>
             </div>
           </div>
@@ -188,7 +180,7 @@ export function ChatWindow({ persona, conversation }) {
           aria-live="polite"
           aria-label="Conversation stream"
         >
-          <div className="max-w-[820px] mx-auto w-full pb-36">
+          <div className="max-w-[780px] mx-auto w-full pb-36">
             {isEmpty ? (
               <motion.div
                 initial={{ opacity: 0, y: 14 }}
@@ -197,22 +189,18 @@ export function ChatWindow({ persona, conversation }) {
                 className="min-h-[calc(100dvh-130px)] py-8 sm:py-12 flex flex-col items-center justify-center text-center"
               >
                 {/* Animated Orb + Persona Portrait */}
-                <div className="relative w-[96px] h-[96px] flex items-center justify-center">
+                <div className="relative w-[92px] h-[92px] flex items-center justify-center">
                   <div className="absolute inset-0 bg-[var(--color-accent)] blur-[38px] opacity-20 rounded-full scale-125" />
                   <div className="ai-orb absolute inset-1.5" />
-                  <div className="absolute inset-[12px] rounded-full border border-white/35 bg-[var(--color-bg-elevated)]/30 backdrop-blur-sm" />
+                  <div className="absolute inset-[11px] rounded-full border border-white/35 bg-[var(--color-bg-elevated)]/30 backdrop-blur-sm" />
                   <img
-                    src={persona?.avatar}
-                    alt={persona?.name || "Persona"}
-                    className="relative z-10 w-14 h-14 rounded-full object-cover object-top border-2 border-white/70 shadow-lg"
+                    src={persona?.avatar || "/avatar-selman.png"}
+                    alt={persona?.name || "Joshua Selman"}
+                    className="relative z-10 w-14 h-14 rounded-full object-cover object-top border-2 border-white/75 shadow-lg"
                   />
                   <span
-                    className="absolute z-20 right-1 bottom-1.5 w-5 h-5 rounded-full bg-[var(--color-bg-elevated)] border border-[var(--color-border)] flex items-center justify-center shadow-sm"
-                    title={
-                      warmupStatus === "warm"
-                        ? "Modal GPU Warm"
-                        : "Modal Serving Connected"
-                    }
+                    className="absolute z-20 right-1 bottom-1 w-4.5 h-4.5 rounded-full bg-[var(--color-bg-elevated)] border border-[var(--color-border)] flex items-center justify-center shadow-sm"
+                    title="Online"
                   >
                     <span
                       className={clsx(
@@ -221,86 +209,52 @@ export function ChatWindow({ persona, conversation }) {
                           ? "bg-emerald-500"
                           : warmupStatus === "warming"
                           ? "bg-amber-500 animate-pulse"
-                          : "bg-[var(--color-accent)]"
+                          : "bg-emerald-500"
                       )}
                     />
                   </span>
                 </div>
 
-                {/* Live Model & Persona Badge */}
-                <div className="mt-5 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--color-bg-elevated)] border border-[var(--color-border)] text-[10px] font-bold tracking-[0.12em] uppercase text-[var(--color-text-secondary)] shadow-sm">
-                  <Cpu size={11} className="text-[var(--color-accent)]" />
-                  <span>{persona?.name || "Persona"}</span>
+                {/* Grounded in 657 Sermons Pill */}
+                <div className="mt-5 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[var(--color-bg-elevated)] border border-[var(--color-border)] text-[11px] font-bold tracking-wide text-[var(--color-text-secondary)] shadow-sm">
+                  <BookOpen size={12} className="text-[var(--color-accent)]" />
+                  <span>{persona?.name || "Joshua Selman"}</span>
                   <span className="text-[var(--color-text-tertiary)]">·</span>
-                  <span className="font-mono text-[var(--color-accent)] lowercase">
-                    {apiSlug}
+                  <span className="text-[var(--color-accent)]">
+                    {isSelman
+                      ? "Grounded in 657 sermons"
+                      : `Grounded in ${sourceCount} works`}
                   </span>
                 </div>
 
-                {/* Editorial Greeting Headline */}
-                <h1 className="mt-4 max-w-2xl text-2xl sm:text-[40px] leading-[1.08] tracking-[-0.035em] font-extrabold text-[var(--color-text-primary)]">
-                  <span>
-                    Hello, I’m {persona?.name?.split(" ")[0] || "Persona"}.{" "}
-                  </span>
+                {/* Clean Editorial Headline (without "Hello, I'm Joshua.") */}
+                <h1 className="mt-4 max-w-2xl text-2xl sm:text-[38px] leading-[1.1] tracking-[-0.03em] font-extrabold text-[var(--color-text-primary)]">
+                  What would you like to{" "}
                   <span className="font-serif italic font-normal text-[var(--color-accent)]">
-                    What is on your heart?
-                  </span>
+                    understand
+                  </span>{" "}
+                  today?
                 </h1>
 
                 {persona?.greeting && (
-                  <p className="mt-3 text-xs sm:text-sm text-[var(--color-text-secondary)] leading-relaxed max-w-xl">
-                    “{persona.greeting}”
+                  <p className="mt-2.5 text-xs sm:text-sm text-[var(--color-text-secondary)] leading-relaxed max-w-lg">
+                    {persona.greeting}
                   </p>
                 )}
 
-                {/* Quick Persona Switcher Pills */}
-                <div className="mt-5 flex items-center justify-center gap-2 flex-wrap">
-                  {personas.map((p) => {
-                    const isCurrent = p.id === persona?.id;
-                    return (
-                      <button
-                        key={p.id}
-                        type="button"
-                        onClick={() => handleSwitchPersona(p)}
-                        className={clsx(
-                          "inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer",
-                          isCurrent
-                            ? "bg-[var(--color-accent-subtle)] border-[var(--color-accent)] text-[var(--color-text-primary)] shadow-sm"
-                            : "bg-[var(--color-bg-elevated)] border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[var(--color-border-strong)] hover:text-[var(--color-text-primary)]"
-                        )}
-                      >
-                        <Avatar
-                          src={p.avatar}
-                          name={p.name}
-                          gradient={p.avatarGradient}
-                          size="xs"
-                          className="!w-5 !h-5 !text-[9px]"
-                        />
-                        <span>{p.name}</span>
-                        {p.apiPersonaId === "ajs" && p.id === "persona-01" && (
-                          <span className="px-1.5 py-0.2 rounded bg-[var(--color-accent)]/15 text-[var(--color-accent)] font-mono text-[9px] font-bold">
-                            ajs
-                          </span>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-
                 {/* Centered Prompt Composer */}
-                <div className="mt-6 w-full max-w-[720px] text-left">
+                <div className="mt-6 w-full max-w-[700px] text-left">
                   <ChatInput
                     onSend={handleSend}
                     onStop={stopStreaming}
-                    onOpenSources={() => setIsSourceModalOpen(true)}
                     disabled={isStreaming}
                     persona={persona}
                     sourceCount={sourceCount}
                   />
                 </div>
 
-                {/* Starter Inquiry Bento Grid */}
-                <div className="mt-5 w-full max-w-[720px] grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-left">
+                {/* Starter Inquiry Grid */}
+                <div className="mt-5 w-full max-w-[700px] grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-left">
                   {(persona?.suggestedPrompts || []).slice(0, 4).map((prompt, index) => {
                     const mode = STARTER_MODES[index % STARTER_MODES.length];
                     const ModeIcon = mode.icon;
@@ -337,8 +291,50 @@ export function ChatWindow({ persona, conversation }) {
                   })}
                 </div>
 
+                {/* Persona Switcher Pills */}
+                <div className="mt-6 flex items-center justify-center gap-2 flex-wrap">
+                  {personas.map((p) => {
+                    const isCurrent = p.id === persona?.id;
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => handleSwitchPersona(p)}
+                        className={clsx(
+                          "inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer",
+                          isCurrent
+                            ? "bg-[var(--color-accent-subtle)] border-[var(--color-accent)] text-[var(--color-text-primary)] shadow-sm"
+                            : "bg-[var(--color-bg-elevated)] border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[var(--color-border-strong)] hover:text-[var(--color-text-primary)]"
+                        )}
+                      >
+                        <Avatar
+                          src={p.avatar}
+                          name={p.name}
+                          gradient={p.avatarGradient}
+                          size="xs"
+                          className="!w-5 !h-5 !text-[9px]"
+                        />
+                        <span>{p.name}</span>
+                        {p.id === "persona-01" && (
+                          <span className="px-1.5 py-0.2 rounded bg-[var(--color-accent)]/15 text-[var(--color-accent)] font-mono text-[9px] font-bold">
+                            657 sermons
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+
                 {/* Trust & Pipeline Footer */}
                 <div className="mt-6 flex items-center justify-center gap-4 sm:gap-6 flex-wrap text-[11px] font-medium text-[var(--color-text-tertiary)]">
+                  <span className="inline-flex items-center gap-1.5">
+                    <BookOpen size={12} className="text-[var(--color-accent)]" />
+                    <span>
+                      {isSelman
+                        ? "Grounded in 657 sermons"
+                        : `Grounded in ${sourceCount} works`}
+                    </span>
+                  </span>
                   <button
                     type="button"
                     onClick={() => setApiModalOpen(true)}
@@ -355,29 +351,21 @@ export function ChatWindow({ persona, conversation }) {
                     <span>
                       {apiMode === "live"
                         ? warmupStatus === "warm"
-                          ? "Modal L40S GPU Warm (~2s)"
+                          ? "Modal GPU Warm (~2s)"
                           : warmupStatus === "warming"
                           ? "Warming Modal GPU..."
-                          : "Modal vLLM Streaming (/v1/chat)"
+                          : "Live Persona Model"
                         : "Demo Simulation Mode"}
                     </span>
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setIsSourceModalOpen(true)}
-                    className="inline-flex items-center gap-1.5 hover:text-[var(--color-text-primary)] transition-colors cursor-pointer"
-                  >
-                    <BookOpen size={12} className="text-[var(--color-accent)]" />
-                    <span>{sourceCount} curated sources</span>
-                  </button>
                   <span className="inline-flex items-center gap-1.5">
                     <ShieldCheck size={12} className="text-emerald-500" />
-                    <span>Crisis Guardrails Active</span>
+                    <span>Safety Guardrails Active</span>
                   </span>
                 </div>
               </motion.div>
             ) : (
-              <div className="space-y-8 pt-6 sm:pt-8">
+              <div className="space-y-6 pt-6 sm:pt-8">
                 {messages.map((msg, index) => {
                   const isLastPersonaMsg =
                     msg.role === "persona" && index === messages.length - 1;
@@ -388,7 +376,6 @@ export function ChatWindow({ persona, conversation }) {
                       message={msg}
                       persona={persona}
                       isLastPersonaMessage={isLastPersonaMsg}
-                      onOpenSources={() => setIsSourceModalOpen(true)}
                       onRegenerate={regenerateLastPersonaMessage}
                     />
                   );
@@ -419,20 +406,19 @@ export function ChatWindow({ persona, conversation }) {
         {/* Bottom Docked Composer (when conversation is active) */}
         {!isEmpty && (
           <div className="flex-shrink-0 relative z-20 bg-gradient-to-t from-[var(--color-bg-base)] via-[var(--color-bg-base)] via-85% to-transparent pt-4 pb-3 sm:pb-4">
-            <div className="max-w-[820px] mx-auto w-full px-4 sm:px-8">
+            <div className="max-w-[780px] mx-auto w-full px-4 sm:px-8">
               <ChatInput
                 onSend={handleSend}
                 onStop={stopStreaming}
-                onOpenSources={() => setIsSourceModalOpen(true)}
                 disabled={isStreaming}
                 persona={persona}
                 sourceCount={sourceCount}
               />
               <div className="mt-2 flex items-center justify-center gap-3 text-[10px] text-[var(--color-text-tertiary)]">
                 <span>
-                  Persona responses are generated via fine-tuned adapter{" "}
-                  <code className="font-mono">{apiSlug}</code> with active safety
-                  guardrails.
+                  {isSelman
+                    ? "Joshua Selman · Grounded in 657 sermons"
+                    : `${persona?.name || "Persona"} · Grounded in ${sourceCount} works`}
                 </span>
               </div>
             </div>
@@ -446,14 +432,6 @@ export function ChatWindow({ persona, conversation }) {
         onClose={() => setPersonaInfoOpen(false)}
         persona={persona}
         onSelectPrompt={(prompt) => handleSend(prompt)}
-        onOpenSources={() => setIsSourceModalOpen(true)}
-      />
-
-      {/* Source Picker Modal */}
-      <SourcePickerModal
-        isOpen={isSourceModalOpen}
-        onClose={() => setIsSourceModalOpen(false)}
-        initialTab="pdf"
       />
 
       {/* Modal Serving API & GPU Warmup Configuration Modal */}

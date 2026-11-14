@@ -9,6 +9,10 @@ export default function StackedPersonaDeck({ personas = [], onSelect }) {
   if (!selected) return null;
 
   const sourceCount = selected.sourceMaterial?.reduce((total, item) => total + item.count, 0) || 0;
+  const primarySourceLabel =
+    selected.sourceMaterial?.length === 1
+      ? `Grounded in ${selected.sourceMaterial[0].count} ${selected.sourceMaterial[0].type.toLowerCase()}`
+      : `Grounded in ${sourceCount} works`;
 
   return (
     <div
@@ -38,7 +42,7 @@ export default function StackedPersonaDeck({ personas = [], onSelect }) {
                   </span>
                   <span className="px-3 py-1.5 rounded-full bg-[var(--color-bg-elevated)] border border-[var(--color-border)] text-[10px] font-bold text-[var(--color-text-secondary)] flex items-center gap-1.5 shadow-sm">
                     <BookOpen size={11} style={{ color: selected.accentColor }} />
-                    {sourceCount} verified works
+                    {primarySourceLabel}
                   </span>
                 </div>
                 <span className="font-mono text-xs text-[var(--color-text-tertiary)]">
@@ -161,7 +165,7 @@ export default function StackedPersonaDeck({ personas = [], onSelect }) {
 
           <div className="mt-5 px-2 pt-5 border-t border-[var(--color-border)]">
             <p className="text-xs leading-relaxed text-[var(--color-text-tertiary)]">
-              Responses are generated from curated source material, with citations available in every conversation.
+              Responses are grounded directly in curated sermons and authentic teachings.
             </p>
           </div>
         </div>

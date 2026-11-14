@@ -76,6 +76,16 @@ a:hover { color: var(--color-accent-glow); }
   border-radius: 4px;
 }
 
+/* No focus outline on text fields (focus is shown via border colour instead) */
+input:focus,
+input:focus-visible,
+textarea:focus,
+textarea:focus-visible,
+select:focus,
+select:focus-visible {
+  outline: none;
+}
+
 /* ---- Selection ---- */
 ::selection {
   background-color: var(--color-accent-subtle);

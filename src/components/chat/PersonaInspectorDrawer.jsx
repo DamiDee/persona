@@ -23,7 +23,6 @@ export function PersonaInspectorDrawer({
   onClose,
   persona,
   onSelectPrompt,
-  onOpenSources,
 }) {
   const {
     warmupStatus,
@@ -210,29 +209,22 @@ export function PersonaInspectorDrawer({
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-mono font-semibold uppercase tracking-wider text-[var(--color-text-tertiary)] flex items-center gap-1.5">
                     <BookOpen size={12} className="text-[var(--color-accent)]" />
-                    Source Corpus ({totalSources})
+                    Grounded Corpus ({totalSources})
                   </span>
-                  <button
-                    type="button"
-                    onClick={onOpenSources}
-                    className="text-[11px] font-semibold text-[var(--color-accent)] hover:underline cursor-pointer"
-                  >
-                    Attach +
-                  </button>
                 </div>
 
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-1 gap-2">
                   {(persona.sourceMaterial || []).map((src) => (
                     <div
                       key={src.type}
-                      className="p-2.5 rounded-xl bg-[var(--color-bg-secondary)] border border-[var(--color-border)] text-center"
+                      className="p-3 rounded-xl bg-[var(--color-bg-secondary)] border border-[var(--color-border)] flex items-center justify-between"
                     >
-                      <p className="text-sm font-extrabold text-[var(--color-text-primary)]">
-                        {src.count}
-                      </p>
-                      <p className="text-[10px] text-[var(--color-text-tertiary)] truncate mt-0.5">
+                      <span className="text-xs font-medium text-[var(--color-text-secondary)]">
                         {src.type}
-                      </p>
+                      </span>
+                      <span className="text-sm font-extrabold text-[var(--color-accent)]">
+                        {src.count} {src.type}
+                      </span>
                     </div>
                   ))}
                 </div>
