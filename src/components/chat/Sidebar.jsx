@@ -16,10 +16,11 @@ import {
   Compass,
   LogOut,
   Brain,
+  Search,
 } from "lucide-react";
 import clsx from "clsx";
 import { Avatar } from "../ui/Avatar";
-import { ThemeToggle } from "../ui/ThemeToggle";
+import { ProductLogo } from "../ui/ProductLogo";
 import { useChatStore } from "../../store/useChatStore";
 import { useAuthStore } from "../../store/useAuthStore";
 import { groupChatsByDate } from "../../data/mockChats";
@@ -131,6 +132,7 @@ function ChatRow({ chat, isActive, onSelect, onDelete, onRename }) {
 }
 
 export function Sidebar({ collapsed, onToggleCollapse, onOpenLibrary }) {
+  const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
   const {
@@ -144,7 +146,13 @@ export function Sidebar({ collapsed, onToggleCollapse, onOpenLibrary }) {
   } = useChatStore();
   const { user, logout } = useAuthStore();
 
-  const grouped = groupChatsByDate(conversations);
+  const filteredConversations = conversations.filter((chat) => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return true;
+    const persona = getPersonaById(chat.personaId);
+    return `${chat.title} ${chat.lastMessage} ${persona?.name || ""}`.toLowerCase().includes(query);
+  });
+  const grouped = groupChatsByDate(filteredConversations);
   const activePersona = mockPersonas.find((p) => p.id === activePersonaId);
 
   const handleSelectChat = (chatId) => {
@@ -210,11 +218,27 @@ export function Sidebar({ collapsed, onToggleCollapse, onOpenLibrary }) {
 
   return (
     <aside className="hidden lg:flex flex-col h-full bg-[var(--color-bg-secondary)] border-r border-[var(--color-border)] flex-shrink-0 w-64 font-sans">
-      {/* Persona Header */}
+      {/* Product Header */}
       <div className="px-4 py-3.5 border-b border-[var(--color-border)] flex items-center justify-between">
-        <div
+        <button type="button" onClick={() => navigate("/")} aria-label="Go to Persona home" className="rounded-xl shadow-sm">
+          <ProductLogo compact />
+        </button>
+
+        <button
+          onClick={onToggleCollapse}
+          aria-label="Collapse sidebar"
+          className="w-8 h-8 flex items-center justify-center rounded-xl text-[var(--color-text-tertiary)] hover:bg-[var(--color-bg-tertiary)] hover:text-[var(--color-text-primary)] transition-all cursor-pointer"
+        >
+          <ChevronLeft size={16} />
+        </button>
+      </div>
+
+      {/* New Conversation Action */}
+      <div className="p-3">
+        <button
+          type="button"
           onClick={onOpenLibrary}
-          className="flex items-center gap-2.5 cursor-pointer group"
+          className="mb-2.5 w-full flex items-center gap-2.5 p-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-base)] text-left hover:border-[var(--color-border-strong)] transition-colors cursor-pointer"
         >
           {activePersona ? (
             <Avatar src={activePersona.avatar} name={activePersona.name} gradient={activePersona.avatarGradient} size="sm" animated />
@@ -231,19 +255,7 @@ export function Sidebar({ collapsed, onToggleCollapse, onOpenLibrary }) {
               {activePersona?.tagline || "Select a mind"}
             </p>
           </div>
-        </div>
-
-        <button
-          onClick={onToggleCollapse}
-          aria-label="Collapse sidebar"
-          className="w-8 h-8 flex items-center justify-center rounded-xl text-[var(--color-text-tertiary)] hover:bg-[var(--color-bg-tertiary)] hover:text-[var(--color-text-primary)] transition-all cursor-pointer"
-        >
-          <ChevronLeft size={16} />
         </button>
-      </div>
-
-      {/* New Conversation Action */}
-      <div className="p-3">
         <button
           onClick={handleNewChat}
           className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-[var(--color-text-primary)] text-[var(--color-bg-base)] font-bold text-xs shadow-md hover:opacity-90 transition-all cursor-pointer"
@@ -251,6 +263,16 @@ export function Sidebar({ collapsed, onToggleCollapse, onOpenLibrary }) {
           <Plus size={15} />
           <span>New Conversation</span>
         </button>
+        <label className="mt-2.5 h-10 px-3 rounded-xl bg-[var(--color-bg-base)] border border-[var(--color-border)] flex items-center gap-2 focus-within:border-[var(--color-accent)] transition-colors">
+          <Search size={13} className="shrink-0 text-[var(--color-text-tertiary)]" />
+          <input
+            type="search"
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            placeholder="Search conversations"
+            className="min-w-0 flex-1 bg-transparent outline-none text-xs text-[var(--color-text-primary)] placeholder:text-[var(--color-text-tertiary)]"
+          />
+        </label>
       </div>
 
       {/* Explore Navigation */}
@@ -271,9 +293,9 @@ export function Sidebar({ collapsed, onToggleCollapse, onOpenLibrary }) {
 
       {/* Recent Chats List */}
       <div className="flex-1 overflow-y-auto px-3 py-2 space-y-4 no-scrollbar">
-        {conversations.length === 0 ? (
+        {filteredConversations.length === 0 ? (
           <div className="py-8 text-center text-xs text-[var(--color-text-tertiary)]">
-            No recent conversations.
+            {searchQuery ? "No matching conversations." : "No recent conversations."}
           </div>
         ) : (
           grouped.map(([label, chats]) => (

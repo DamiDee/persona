@@ -1,15 +1,11 @@
 // Login.jsx — Compact, high-contrast dark login form
 
-import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { motion } from "framer-motion";
-import { LogIn, ArrowRight } from "lucide-react";
-import clsx from "clsx";
+import { ArrowRight, ShieldCheck } from "lucide-react";
 import { Input } from "../../components/ui/Input";
-import { Button } from "../../components/ui/Button";
 import { useAuthStore } from "../../store/useAuthStore";
 import { useToast } from "../../components/ui/Toast";
 
@@ -62,13 +58,19 @@ export default function Login() {
   };
 
   return (
-    <div className="p-8 rounded-3xl bg-[#0c0e12] border border-white/10 shadow-2xl space-y-6">
-      <div>
-        <h2 className="text-white text-2xl font-bold tracking-tight">
+    <div className="relative overflow-hidden p-6 sm:p-8 rounded-[30px] bg-[var(--color-glass-strong)] backdrop-blur-2xl border border-[var(--color-border-strong)] shadow-[0_24px_80px_rgba(15,23,42,0.12)] space-y-6">
+      <div className="absolute -right-20 -top-24 w-52 h-52 rounded-full bg-[var(--color-accent)] opacity-[0.08] blur-3xl pointer-events-none" />
+
+      <div className="relative">
+        <span className="inline-flex items-center gap-2 text-[10px] font-bold tracking-[0.15em] uppercase text-[var(--color-accent)]">
+          <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-accent)]" />
           Welcome back
+        </span>
+        <h2 className="mt-3 text-[var(--color-text-primary)] text-3xl sm:text-[34px] leading-tight font-extrabold tracking-[-0.035em]">
+          Continue your conversations.
         </h2>
-        <p className="text-zinc-400 text-xs mt-1">
-          Sign in to continue your conversations with remarkable minds
+        <p className="text-[var(--color-text-secondary)] text-sm mt-2 leading-relaxed">
+          Sign in to return to your saved minds, sources, and insights.
         </p>
       </div>
 
@@ -77,7 +79,7 @@ export default function Login() {
         type="button"
         onClick={handleGoogle}
         disabled={isLoading}
-        className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-2xl bg-zinc-900 border border-zinc-800 text-xs font-semibold text-white hover:bg-zinc-800 hover:border-zinc-700 transition-all cursor-pointer shadow-sm"
+        className="relative w-full flex items-center justify-center gap-3 px-4 py-3.5 rounded-2xl bg-[var(--color-bg-elevated)] border border-[var(--color-border)] text-sm font-semibold text-[var(--color-text-primary)] hover:border-[var(--color-border-strong)] hover:-translate-y-0.5 transition-all cursor-pointer shadow-sm"
       >
         <GoogleIcon />
         <span>Continue with Google</span>
@@ -85,9 +87,9 @@ export default function Login() {
 
       {/* Divider */}
       <div className="flex items-center gap-3">
-        <div className="flex-1 h-px bg-zinc-800" />
-        <span className="text-[11px] text-zinc-500 font-mono">OR</span>
-        <div className="flex-1 h-px bg-zinc-800" />
+        <div className="flex-1 h-px bg-[var(--color-border)]" />
+        <span className="text-[10px] text-[var(--color-text-tertiary)] font-bold tracking-[0.14em]">OR EMAIL</span>
+        <div className="flex-1 h-px bg-[var(--color-border)]" />
       </div>
 
       {/* Form */}
@@ -110,7 +112,7 @@ export default function Login() {
         <div className="flex justify-end">
           <Link
             to="/forgot-password"
-            className="text-xs text-cyan-400 hover:underline"
+            className="text-xs text-[var(--color-accent)] hover:text-[var(--color-accent-glow)]"
           >
             Forgot password?
           </Link>
@@ -119,19 +121,24 @@ export default function Login() {
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full py-3 px-4 rounded-2xl bg-white hover:bg-zinc-200 text-zinc-950 font-bold text-xs transition-all shadow-md cursor-pointer flex items-center justify-center gap-2"
+          className="group w-full py-3.5 px-4 rounded-2xl bg-[var(--color-text-primary)] hover:opacity-90 text-[var(--color-bg-base)] font-bold text-sm transition-all shadow-lg cursor-pointer flex items-center justify-center gap-2"
         >
           <span>Sign In</span>
-          <ArrowRight size={14} />
+          <ArrowRight size={15} className="transition-transform group-hover:translate-x-1" />
         </button>
       </form>
 
-      <p className="text-center text-xs text-zinc-500">
+      <p className="text-center text-xs text-[var(--color-text-tertiary)]">
         Don't have an account?{" "}
-        <Link to="/signup" className="text-cyan-400 hover:underline font-semibold">
+        <Link to="/signup" className="text-[var(--color-accent)] hover:text-[var(--color-accent-glow)] font-semibold">
           Sign up free
         </Link>
       </p>
+
+      <div className="pt-4 border-t border-[var(--color-border)] flex items-center justify-center gap-2 text-[10px] text-[var(--color-text-tertiary)]">
+        <ShieldCheck size={12} className="text-emerald-500" />
+        Private workspace · Secure sign in
+      </div>
     </div>
   );
 }

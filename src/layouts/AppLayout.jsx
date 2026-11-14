@@ -5,7 +5,6 @@ import { useState } from "react";
 import { Outlet, Navigate, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, ChevronRight } from "lucide-react";
-import clsx from "clsx";
 import { Sidebar } from "../components/chat/Sidebar";
 import { MobileDrawer } from "../components/chat/MobileDrawer";
 import { NeuralBackground } from "../components/chat/NeuralBackground";
@@ -21,7 +20,6 @@ export function AppLayout() {
     sidebarCollapsed,
     toggleSidebar,
     getActivePersona,
-    getActiveConversation,
   } = useChatStore();
 
   if (!isAuthenticated) {

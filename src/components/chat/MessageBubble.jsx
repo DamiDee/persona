@@ -59,8 +59,8 @@ export function MessageBubble({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.28, ease: "easeOut" }}
       className={clsx(
-        "flex items-start gap-4 group relative",
-        isUser ? "flex-row-reverse" : "flex-row"
+        "flex items-start gap-3 sm:gap-4 group relative",
+        isUser ? "justify-end" : "justify-start"
       )}
     >
       {/* Persona avatar */}
@@ -72,7 +72,7 @@ export function MessageBubble({
           size="sm"
           animated={isLastPersonaMessage && isStreaming}
           typing={isLastPersonaMessage && isStreaming}
-          className="flex-shrink-0 mt-1"
+          className="flex-shrink-0 mt-0.5 shadow-sm"
         />
       )}
 
@@ -81,18 +81,29 @@ export function MessageBubble({
         className={clsx(
           "flex flex-col gap-1.5",
           isUser
-            ? "items-end max-w-[85%] sm:max-w-[75%]"
-            : "items-start max-w-[92%] sm:max-w-[85%]"
+            ? "items-end max-w-[88%] sm:max-w-[72%] order-first"
+            : "items-start min-w-0 max-w-[calc(100%-48px)] sm:max-w-[82%]"
         )}
       >
+        {!isUser && (
+          <div className="px-1 mb-0.5 flex items-center gap-2">
+            <span className="text-xs font-bold text-[var(--color-text-primary)]">
+              {persona?.name || "Persona"}
+            </span>
+            <span className="w-1 h-1 rounded-full bg-[var(--color-accent)]" />
+            <span className="text-[10px] font-medium text-[var(--color-text-tertiary)]">
+              Grounded response
+            </span>
+          </div>
+        )}
         <div
           className={clsx(
-            "text-[15px] sm:text-[16px] leading-[1.7] transition-all duration-200 font-sans",
+            "text-[15px] sm:text-[16px] leading-[1.75] transition-all duration-200 font-sans",
             isUser
               ? [
-                  "px-4 py-3 rounded-2xl rounded-tr-xs bg-[var(--color-text-primary)] text-[var(--color-bg-base)] font-medium shadow-sm",
+                  "px-4 py-3 rounded-[20px] rounded-br-md bg-[#f4f4f5] !text-[#111318] border border-black/[0.06] font-medium shadow-sm",
                 ]
-              : ["text-[var(--color-text-primary)] py-2 px-1 rounded-2xl"]
+              : ["text-[var(--color-text-primary)] py-1 px-1"]
           )}
         >
           {isStreaming && !message.content ? (
@@ -100,7 +111,14 @@ export function MessageBubble({
               <TypingIndicator />
             </div>
           ) : (
-            <p className="whitespace-pre-wrap">{message.content}</p>
+            <p
+              className={clsx(
+                "whitespace-pre-wrap",
+                isUser ? "!text-[#111318]" : "!text-[var(--color-text-primary)]"
+              )}
+            >
+              {message.content}
+            </p>
           )}
 
           {/* Streaming cursor */}
@@ -116,12 +134,12 @@ export function MessageBubble({
 
         {/* Grounded Source References & Action Toolbar */}
         {!isUser && !isStreaming && message.content && (
-          <div className="flex items-center gap-2.5 px-1 pt-1 flex-wrap">
+          <div className="flex items-center gap-2.5 px-1 pt-2 flex-wrap">
             {persona?.sourceMaterial && (
               <button
                 type="button"
                 onClick={onOpenSources}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[var(--color-bg-tertiary)] border border-[var(--color-border)] hover:border-[var(--color-accent)] text-[11px] font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-all cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-[var(--color-bg-elevated)] border border-[var(--color-border)] hover:border-[var(--color-accent)] text-[10px] font-bold text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-all cursor-pointer"
               >
                 <BookOpen size={11} className="text-[var(--color-accent)]" />
                 <span>

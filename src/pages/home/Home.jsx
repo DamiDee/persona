@@ -9,22 +9,14 @@ import {
   Compass,
   BookOpen,
   Database,
-  Brain,
   Layers,
   ChevronRight,
-  Send,
-  Sparkles,
-  Search,
-  CheckCircle2,
-  FileText,
   MessageSquare,
-  Cpu,
   ShieldCheck,
 } from "lucide-react";
 import clsx from "clsx";
 import { NeuralBackground } from "../../components/chat/NeuralBackground";
-import { PersonaCard } from "../../components/ui/PersonaCard";
-import { ThemeToggle } from "../../components/ui/ThemeToggle";
+import { ProductLogo } from "../../components/ui/ProductLogo";
 import SourcePickerModal from "../../components/home/SourcePickerModal";
 import ProcessRoadmap from "../../components/home/ProcessRoadmap";
 import StackedPersonaDeck from "../../components/home/StackedPersonaDeck";
@@ -106,6 +98,19 @@ export default function Home() {
     return () => clearInterval(interval);
   }, [promptText, isFocused]);
 
+  // Restore section deep-links after the client-rendered page has mounted.
+  useEffect(() => {
+    const sectionId = window.location.hash.slice(1);
+    if (!sectionId) return;
+
+    const timeoutId = window.setTimeout(() => {
+      const target = document.getElementById(sectionId);
+      if (target) window.scrollTo(0, target.offsetTop);
+    }, 80);
+
+    return () => window.clearTimeout(timeoutId);
+  }, []);
+
   const handleSubmitPrompt = (e) => {
     if (e) e.preventDefault();
     const textToSubmit = promptText.trim() || ROTATING_QUESTIONS[rotatingIndex];
@@ -146,38 +151,35 @@ export default function Home() {
       {/* Background Neural Canvas */}
       <NeuralBackground opacity={0.06} />
 
-      {/* Floating Header */}
-      <header className="absolute top-0 left-0 right-0 z-50 w-full h-20 px-6 sm:px-10 transition-all duration-300 bg-transparent backdrop-blur-none">
-        <div className="max-w-7xl mx-auto w-full h-full flex items-center justify-between relative">
-          {/* Left Spacer for centering */}
-          <div className="hidden md:flex flex-1" />
+      {/* Floating glass navigation */}
+      <header className="absolute top-0 left-0 right-0 z-50 w-full px-4 sm:px-6 pt-4 sm:pt-5">
+        <div className="glass-nav max-w-6xl mx-auto w-full h-[66px] rounded-[22px] px-3 sm:px-4 flex items-center justify-between gap-4">
+          <Link to="/" aria-label="Persona home" className="shrink-0 rounded-xl overflow-hidden shadow-sm">
+            <ProductLogo compact />
+          </Link>
 
-          {/* Center: Nav Links */}
-          <nav className="hidden md:flex flex-1 justify-center items-center gap-7 text-xs font-semibold text-white/80">
+          <nav className="hidden md:flex items-center gap-1 text-xs font-semibold text-white/75">
             <a href="#minds" className="hover:text-white transition-colors">
-              Minds
+              <span className="block px-3.5 py-2 rounded-full hover:bg-white/10">Minds</span>
             </a>
             <a href="#process" className="hover:text-white transition-colors">
-              Architecture
+              <span className="block px-3.5 py-2 rounded-full hover:bg-white/10">Architecture</span>
             </a>
             <Link to="/onboarding" className="hover:text-white transition-colors">
-              Onboarding
+              <span className="block px-3.5 py-2 rounded-full hover:bg-white/10">Onboarding</span>
             </Link>
             <Link to="/login" className="hover:text-white transition-colors">
-              Sign In
+              <span className="block px-3.5 py-2 rounded-full hover:bg-white/10">Sign In</span>
             </Link>
           </nav>
 
-          {/* Right Side: Action Buttons */}
-          <div className="flex flex-1 justify-end items-center gap-4 sm:gap-6">
-            <button
-              onClick={() => navigate("/app/library")}
-              className="px-4 py-2 rounded-full bg-white text-zinc-900 font-bold text-xs hover:bg-white/90 transition-all cursor-pointer flex items-center gap-1.5 shadow-sm"
-            >
-              <span>Explore</span>
-              <ArrowRight size={13} />
-            </button>
-          </div>
+          <button
+            onClick={() => navigate("/app/library")}
+            className="px-4 sm:px-5 py-2.5 rounded-full bg-white !text-[#111318] font-bold text-xs hover:bg-cyan-50 transition-all cursor-pointer flex items-center gap-2 shadow-sm"
+          >
+            <span>Explore</span>
+            <ArrowRight size={13} />
+          </button>
         </div>
       </header>
 
@@ -188,7 +190,41 @@ export default function Home() {
           {/* Full-bleed hero background without opacity */}
           <div className="absolute inset-0 w-full h-full">
             <div className="absolute inset-0 bg-[url('/hero_1.jpg')] bg-center bg-cover bg-no-repeat w-full h-full opacity-100" />
+            <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(3,7,18,0.12)_0%,rgba(3,7,18,0.02)_48%,rgba(3,7,18,0.46)_100%)]" />
+            <div className="absolute inset-y-0 left-0 w-[52%] bg-[radial-gradient(circle_at_18%_52%,rgba(34,211,238,0.16),transparent_58%)]" />
           </div>
+
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.55, duration: 0.5 }}
+            className="hidden xl:flex absolute left-[5%] top-[48%] z-20 glass-nav rounded-[20px] p-3.5 items-center gap-3"
+          >
+            <div className="flex -space-x-2">
+              {mockPersonas.slice(0, 3).map((persona) => (
+                <img key={persona.id} src={persona.avatar} alt="" className="w-8 h-8 rounded-full object-cover border-2 border-slate-900" />
+              ))}
+            </div>
+            <div>
+              <p className="!text-white text-xs font-bold">Verified minds</p>
+              <p className="!text-white/55 text-[10px]">Distinct voices, grounded sources</p>
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.7, duration: 0.5 }}
+            className="hidden xl:flex absolute right-[5%] top-[57%] z-20 glass-nav rounded-[20px] p-3.5 items-center gap-3"
+          >
+            <span className="w-9 h-9 rounded-xl bg-cyan-400/15 text-cyan-300 flex items-center justify-center border border-cyan-300/20">
+              <ShieldCheck size={16} />
+            </span>
+            <div>
+              <p className="!text-white text-xs font-bold">Citation ready</p>
+              <p className="!text-white/55 text-[10px]">Every answer can be traced</p>
+            </div>
+          </motion.div>
 
           <div className="relative z-10 max-w-7xl mx-auto px-6 pt-32 pb-32 text-center flex flex-col items-center w-full">
             <motion.div
@@ -230,18 +266,18 @@ export default function Home() {
             <div className="w-full max-w-3xl pt-6">
               <div
                 className={clsx(
-                  "relative rounded-3xl transition-all duration-300",
-                  "bg-[var(--color-bg-elevated)] border p-4 sm:p-5 text-left shadow-xl",
+                  "composer-aura relative rounded-[26px] transition-all duration-300",
+                  "bg-[#0c1018]/88 backdrop-blur-2xl border border-white/15 p-4 sm:p-5 text-left shadow-[0_24px_80px_rgba(3,7,18,0.32)]",
                   isFocused
-                    ? "border-[var(--color-accent)] shadow-[var(--shadow-accent)] ring-1 ring-[var(--color-accent)]/30"
-                    : "border-[var(--color-border)] hover:border-[var(--color-border-strong)]"
+                    ? "border-cyan-300/65 ring-4 ring-cyan-300/10"
+                    : "hover:border-white/25"
                 )}
               >
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                   {/* Left Source Attach Button */}
                   <button
                     onClick={() => setIsModalOpen(true)}
-                    className="flex-shrink-0 flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-[var(--color-bg-tertiary)] border border-[var(--color-border)] hover:border-[var(--color-border-strong)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-all text-xs font-semibold cursor-pointer"
+                    className="flex-shrink-0 flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-white/[0.06] border border-white/10 hover:border-white/25 text-white/65 hover:text-white transition-all text-xs font-semibold cursor-pointer"
                   >
                     <BookOpen size={14} className="text-[var(--color-accent)]" />
                     <span>Attach Source</span>
@@ -258,7 +294,7 @@ export default function Home() {
                       onBlur={() => setIsFocused(false)}
                       rows={1}
                       placeholder={ROTATING_QUESTIONS[rotatingIndex]}
-                      className="w-full bg-transparent text-[var(--color-text-primary)] placeholder:text-[var(--color-text-tertiary)] text-sm sm:text-base font-medium focus:outline-none resize-none py-1.5 font-sans leading-relaxed"
+                      className="w-full bg-transparent !text-white placeholder:!text-white/40 text-sm sm:text-base font-medium focus:outline-none resize-none py-1.5 font-sans leading-relaxed"
                     />
                   </div>
 
@@ -283,7 +319,7 @@ export default function Home() {
                     setPromptText(q.text);
                     textareaRef.current?.focus();
                   }}
-                  className="px-3.5 py-1.5 rounded-full bg-[var(--color-bg-tertiary)] hover:bg-[var(--color-bg-secondary)] border border-[var(--color-border)] text-xs font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-all cursor-pointer"
+                  className="px-3.5 py-1.5 rounded-full bg-black/25 hover:bg-black/40 backdrop-blur-md border border-white/15 text-xs font-medium !text-white/75 hover:!text-white transition-all cursor-pointer"
                 >
                   "{q.text}"
                 </button>
@@ -296,24 +332,34 @@ export default function Home() {
         <ProcessRoadmap milestones={PROCESS_MILESTONES} />
 
         {/* SECTION 3: PERSONA DISCOVERY ("Meet the minds") */}
-        <section id="minds" className="relative z-10 py-28 border-t border-[var(--color-border)]">
-          <div className="max-w-7xl mx-auto px-6 space-y-12">
-            <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4">
-              <div className="space-y-2">
-                <span className="text-xs font-bold tracking-widest uppercase text-[var(--color-accent)]">
-                  Certified Catalog
+        <section id="minds" className="relative z-10 py-24 sm:py-32 border-t border-[var(--color-border)] overflow-hidden">
+          <div className="absolute inset-x-0 top-0 h-[420px] bg-[radial-gradient(circle_at_18%_20%,var(--color-accent-subtle),transparent_58%)] pointer-events-none" />
+          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 space-y-10 sm:space-y-14">
+            <div className="grid lg:grid-cols-[1fr_0.7fr] items-end gap-6 lg:gap-16">
+              <div>
+                <span className="inline-flex items-center gap-2 text-[11px] font-bold tracking-[0.18em] uppercase text-[var(--color-accent)]">
+                  <span className="w-2 h-2 rounded-full bg-[var(--color-accent)]" />
+                  Curated perspectives
                 </span>
-                <h2 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-[var(--color-text-primary)]">
-                  Meet the minds.
+                <h2 className="mt-5 text-4xl sm:text-5xl lg:text-[64px] leading-[0.96] font-extrabold tracking-[-0.05em] text-[var(--color-text-primary)]">
+                  Meet the minds
+                  <span className="font-serif italic font-normal"> behind the ideas.</span>
                 </h2>
               </div>
-              <Link
-                to="/app/library"
-                className="text-xs font-bold text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] flex items-center gap-1 transition-colors"
-              >
-                <span>View all Personas</span>
-                <ChevronRight size={14} />
-              </Link>
+              <div className="lg:pb-1">
+                <p className="text-sm sm:text-base leading-relaxed text-[var(--color-text-secondary)] max-w-lg">
+                  Move beyond summaries. Explore a living catalog of distinctive thinkers, each grounded in a verified body of work.
+                </p>
+                <Link
+                  to="/app/library"
+                  className="mt-5 inline-flex items-center gap-2 text-xs font-bold text-[var(--color-text-primary)] hover:text-[var(--color-accent)] transition-colors"
+                >
+                  <span>Explore the full catalog</span>
+                  <span className="w-8 h-8 rounded-full border border-[var(--color-border-strong)] flex items-center justify-center">
+                    <ChevronRight size={14} />
+                  </span>
+                </Link>
+              </div>
             </div>
 
             {/* Stacked Deck of Personas */}

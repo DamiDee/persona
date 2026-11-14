@@ -1,115 +1,100 @@
-// AuthLayout.jsx — Desktop split-screen storytelling layout & mobile centered auth
-
 import { Outlet, Navigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Brain, Sparkles } from "lucide-react";
-import { NeuralBackground } from "../components/chat/NeuralBackground";
+import { BookOpen, Quote, ShieldCheck, Sparkles } from "lucide-react";
+import { ProductLogo } from "../components/ui/ProductLogo";
+import { ThemeToggle } from "../components/ui/ThemeToggle";
 import { useAuthStore } from "../store/useAuthStore";
 import { mockPersonas } from "../data/mockPersonas";
 
 export function AuthLayout() {
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   if (isAuthenticated) {
     return <Navigate to="/app/library" replace />;
   }
 
   return (
-    <div className="min-h-screen bg-[#08090b] text-[#f3f4f6] font-sans flex relative overflow-hidden">
-      {/* Subtle Neural Background */}
-      <NeuralBackground opacity={0.06} />
+    <div className="min-h-screen bg-[var(--color-bg-base)] text-[var(--color-text-primary)] font-sans flex relative overflow-hidden transition-colors duration-300">
+      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_85%_15%,var(--color-accent-subtle),transparent_38%)]" />
 
-      {/* LEFT PANEL: DESKTOP BRAND STORYTELLING & FLOATING ARTWORK (Hidden on mobile) */}
-      <div className="hidden lg:flex lg:w-1/2 relative bg-[#0c0e12] border-r border-white/[0.06] p-12 flex-col justify-between overflow-hidden">
-        {/* Ambient Glowing Orbs */}
+      {/* Brand story panel */}
+      <section className="hidden lg:flex lg:w-[52%] relative m-4 mr-0 rounded-[32px] overflow-hidden p-10 xl:p-12 flex-col justify-between min-h-[calc(100vh-32px)] border border-white/10 shadow-[0_28px_90px_rgba(3,7,18,0.2)]">
+        <div className="absolute inset-0 bg-[url('/hero_1.jpg')] bg-cover bg-center" />
+        <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(3,7,18,0.9)_0%,rgba(8,47,73,0.68)_48%,rgba(30,41,59,0.5)_100%)]" />
         <motion.div
-          animate={{
-            x: [0, 40, -40, 0],
-            y: [0, -40, 40, 0],
-            scale: [1, 1.2, 0.9, 1],
-          }}
-          transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-1/4 left-1/4 w-96 h-96 bg-cyan-500/10 blur-[120px] rounded-full pointer-events-none"
-        />
-        <motion.div
-          animate={{
-            x: [0, -40, 40, 0],
-            y: [0, 50, -30, 0],
-          }}
-          transition={{ duration: 25, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-600/10 blur-[120px] rounded-full pointer-events-none"
+          animate={{ x: [0, 50, -25, 0], y: [0, -35, 25, 0], scale: [1, 1.15, 0.94, 1] }}
+          transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute left-[18%] top-[26%] w-80 h-80 bg-cyan-400/15 blur-[100px] rounded-full"
         />
 
-        {/* Brand Header */}
-        <Link to="/" className="flex items-center gap-3 relative z-10">
-          <div className="w-9 h-9 rounded-xl bg-white/[0.06] border border-white/10 flex items-center justify-center text-cyan-400">
-            <Brain size={20} />
-          </div>
-          <span className="text-white font-bold text-xl tracking-tight">Persona</span>
+        <Link to="/" className="relative z-10 w-fit rounded-2xl shadow-lg">
+          <ProductLogo />
         </Link>
 
-        {/* Center Storytelling Hero */}
-        <div className="relative z-10 space-y-6 max-w-lg">
-          <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.04] border border-white/[0.08] text-xs font-medium text-cyan-300">
-            <Sparkles size={12} className="text-cyan-400" />
-            <span>Private Knowledge Workspace</span>
+        <div className="relative z-10 max-w-xl">
+          <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.08] backdrop-blur-xl border border-white/[0.14] text-[11px] font-bold tracking-[0.12em] uppercase text-cyan-200">
+            <Sparkles size={12} /> Your private knowledge space
           </span>
 
-          <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight leading-[1.1] text-white">
-            Conversations with{" "}
-            <span className="font-serif italic font-normal text-cyan-300">
-              minds that shaped you.
-            </span>
+          <h1 className="mt-6 text-5xl xl:text-[64px] leading-[0.98] font-extrabold tracking-[-0.05em] !text-white">
+            Pick up where your
+            <span className="font-serif italic font-normal text-cyan-200"> curiosity left off.</span>
           </h1>
-
-          <p className="text-zinc-400 text-sm leading-relaxed">
-            Enter an intelligent reading environment grounded in the teachings, speeches, and books of remarkable historical and modern figures.
+          <p className="mt-6 max-w-lg text-sm xl:text-base leading-relaxed !text-white/65">
+            Return to conversations grounded in verified books, teachings, interviews, and ideas from remarkable minds.
           </p>
 
-          {/* Persona Avatars Showcase Strip */}
-          <div className="pt-4 flex items-center gap-3">
-            {mockPersonas.slice(0, 4).map((p) => (
-              <div
-                key={p.id}
-                className="w-11 h-11 rounded-full border border-white/20 p-0.5 bg-zinc-900 shadow-md relative group"
-                title={p.name}
-              >
-                <img src={p.avatar} alt={p.name} className="w-full h-full object-cover rounded-full" />
-              </div>
-            ))}
-            <span className="text-xs text-zinc-500 font-medium ml-2">
-              4 Certified Minds
-            </span>
+          <div className="mt-8 grid grid-cols-2 gap-3 max-w-md">
+            <div className="glass-nav rounded-[18px] p-4">
+              <BookOpen size={16} className="text-cyan-300" />
+              <p className="mt-3 text-xl font-bold !text-white">180+</p>
+              <p className="text-[10px] !text-white/50">Curated source materials</p>
+            </div>
+            <div className="glass-nav rounded-[18px] p-4">
+              <ShieldCheck size={16} className="text-cyan-300" />
+              <p className="mt-3 text-xl font-bold !text-white">Source-first</p>
+              <p className="text-[10px] !text-white/50">Traceable conversations</p>
+            </div>
           </div>
         </div>
 
-        {/* Footer Quote */}
-        <div className="relative z-10 pt-8 border-t border-white/[0.06]">
-          <p className="text-xs text-zinc-500 font-mono">
-            "Stories and teachings matter enormously — they shape how we see the world."
-          </p>
+        <div className="relative z-10 flex items-center justify-between gap-5 pt-7 border-t border-white/10">
+          <div className="flex items-center gap-3">
+            <div className="flex -space-x-2">
+              {mockPersonas.slice(0, 4).map((persona) => (
+                <img
+                  key={persona.id}
+                  src={persona.avatar}
+                  alt=""
+                  className="w-9 h-9 rounded-full border-2 border-slate-900 object-cover object-top"
+                />
+              ))}
+            </div>
+            <span className="text-[11px] font-medium !text-white/55">Four certified minds</span>
+          </div>
+          <Quote size={18} className="text-white/35" />
         </div>
-      </div>
+      </section>
 
-      {/* RIGHT PANEL: AUTHENTICATION FORM */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 relative z-10">
-        <div className="w-full max-w-md">
-          {/* Mobile Logo Header */}
-          <div className="lg:hidden text-center mb-8 flex flex-col items-center">
-            <Link to="/" className="flex items-center gap-2 mb-2">
-              <div className="w-9 h-9 rounded-xl bg-white/[0.06] border border-white/10 flex items-center justify-center text-cyan-400">
-                <Brain size={20} />
-              </div>
-              <span className="text-white font-bold text-xl">Persona</span>
+      {/* Authentication workspace */}
+      <section className="w-full lg:w-[48%] min-h-screen flex items-center justify-center p-5 sm:p-10 xl:p-14 relative z-10">
+        <div className="absolute right-5 top-5 sm:right-8 sm:top-7">
+          <ThemeToggle />
+        </div>
+
+        <div className="w-full max-w-[460px] pt-16 lg:pt-0">
+          <div className="lg:hidden mb-8 flex flex-col items-center text-center">
+            <Link to="/" className="rounded-2xl shadow-md">
+              <ProductLogo />
             </Link>
-            <p className="text-xs text-zinc-400 font-serif italic">
+            <p className="mt-3 text-xs text-[var(--color-text-tertiary)]">
               Conversations with minds that shaped you
             </p>
           </div>
 
           <Outlet />
         </div>
-      </div>
+      </section>
     </div>
   );
 }
