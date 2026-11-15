@@ -20,7 +20,6 @@ import { MessageBubble } from "./MessageBubble";
 import { ChatInput } from "./ChatInput";
 import { PersonaInspectorDrawer } from "./PersonaInspectorDrawer";
 import { ApiConnectionModal } from "./ApiConnectionModal";
-import { Avatar } from "../ui/Avatar";
 import { useChatStore } from "../../store/useChatStore";
 import { resolveApiPersonaId } from "../../data/mockPersonas";
 import { useNavigate } from "react-router-dom";
@@ -50,7 +49,6 @@ export function ChatWindow({ persona, conversation }) {
     setApiModalOpen,
     apiMode,
     warmupStatus,
-    personas,
   } = useChatStore();
   const navigate = useNavigate();
 
@@ -103,15 +101,6 @@ export function ChatWindow({ persona, conversation }) {
     } else {
       sendMessage(content);
     }
-  };
-
-  const handleSwitchPersona = (targetPersona) => {
-    if (targetPersona.isPremium) {
-      navigate("/app/premium");
-      return;
-    }
-    const chatId = createNewChat(targetPersona.id);
-    navigate(`/app/chat/${chatId}`);
   };
 
   const isEmpty = messages.length === 0;
@@ -287,40 +276,6 @@ export function ChatWindow({ persona, conversation }) {
                           className="shrink-0 mt-1 text-[var(--color-text-tertiary)] group-hover:text-[var(--color-accent)] transition-colors"
                         />
                       </motion.button>
-                    );
-                  })}
-                </div>
-
-                {/* Persona Switcher Pills */}
-                <div className="mt-6 flex items-center justify-center gap-2 flex-wrap">
-                  {personas.map((p) => {
-                    const isCurrent = p.id === persona?.id;
-                    return (
-                      <button
-                        key={p.id}
-                        type="button"
-                        onClick={() => handleSwitchPersona(p)}
-                        className={clsx(
-                          "inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer",
-                          isCurrent
-                            ? "bg-[var(--color-accent-subtle)] border-[var(--color-accent)] text-[var(--color-text-primary)] shadow-sm"
-                            : "bg-[var(--color-bg-elevated)] border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[var(--color-border-strong)] hover:text-[var(--color-text-primary)]"
-                        )}
-                      >
-                        <Avatar
-                          src={p.avatar}
-                          name={p.name}
-                          gradient={p.avatarGradient}
-                          size="xs"
-                          className="!w-5 !h-5 !text-[9px]"
-                        />
-                        <span>{p.name}</span>
-                        {p.id === "persona-01" && (
-                          <span className="px-1.5 py-0.2 rounded bg-[var(--color-accent)]/15 text-[var(--color-accent)] font-mono text-[9px] font-bold">
-                            657 sermons
-                          </span>
-                        )}
-                      </button>
                     );
                   })}
                 </div>
