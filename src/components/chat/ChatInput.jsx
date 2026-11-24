@@ -1,4 +1,4 @@
-// ChatInput.jsx — Modern composer with Stop Generation, Voice input, and 657 Sermons grounding badge
+// ChatInput.jsx — Modern composer with Short/Normal/Long length toggle, Stop Generation, Voice input, and 657 Sermons badge
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
@@ -18,6 +18,12 @@ import { resolveApiPersonaId } from "../../data/mockPersonas";
 const MAX_ROWS = 6;
 const LINE_HEIGHT = 24;
 
+const LENGTH_OPTIONS = [
+  { id: "short", label: "Short" },
+  { id: "normal", label: "Normal" },
+  { id: "long", label: "Long" },
+];
+
 export function ChatInput({
   onSend,
   onStop,
@@ -30,7 +36,13 @@ export function ChatInput({
   const [isFocused, setIsFocused] = useState(false);
   const textareaRef = useRef(null);
   const { addToast } = useToast();
-  const { apiMode, warmupStatus, setApiModalOpen } = useChatStore();
+  const {
+    apiMode,
+    warmupStatus,
+    setApiModalOpen,
+    responseLength,
+    setResponseLength,
+  } = useChatStore();
 
   const apiSlug = resolveApiPersonaId(persona);
   const isSelman = !persona || persona.id === "persona-01" || apiSlug === "ajs";
@@ -140,8 +152,36 @@ export function ChatInput({
 
       <div className="px-3.5 pb-3 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0 flex-wrap">
+          {/* Short / Normal / Long Length Toggle */}
+          <div
+            className="inline-flex items-center p-0.5 rounded-full bg-[var(--color-bg-tertiary)] border border-[var(--color-border)]"
+            role="group"
+            aria-label="Reply length"
+          >
+            {LENGTH_OPTIONS.map((opt) => {
+              const active = responseLength === opt.id;
+              return (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => setResponseLength(opt.id)}
+                  className={clsx(
+                    "px-2.5 py-1 rounded-full text-[10px] font-bold transition-all cursor-pointer select-none",
+                    active
+                      ? "bg-[var(--color-bg-elevated)] text-[var(--color-accent)] shadow-xs border border-[var(--color-border)]"
+                      : "text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)]"
+                  )}
+                  aria-pressed={active}
+                  title={`Reply length: ${opt.label}`}
+                >
+                  {opt.label}
+                </button>
+              );
+            })}
+          </div>
+
           {/* Grounded in 657 Sermons Badge */}
-          <span className="inline-flex min-w-0 items-center gap-1.5 px-2.5 py-1 rounded-full bg-[var(--color-bg-tertiary)] border border-[var(--color-border)] text-[10px] font-semibold text-[var(--color-text-secondary)]">
+          <span className="hidden sm:inline-flex min-w-0 items-center gap-1.5 px-2.5 py-1 rounded-full bg-[var(--color-bg-tertiary)] border border-[var(--color-border)] text-[10px] font-semibold text-[var(--color-text-secondary)]">
             <BookOpen size={11} className="shrink-0 text-[var(--color-accent)]" />
             <span className="truncate">
               {isSelman

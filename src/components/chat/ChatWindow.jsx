@@ -31,6 +31,9 @@ const STARTER_MODES = [
   { label: "Perspective Shift", icon: GitCompareArrows },
 ];
 
+const PERMANENT_DISCLOSURE =
+  "AI persona trained on the public sermons of Apostle Joshua Selman. It is not him and can be wrong about facts and Scripture. Not a substitute for pastoral, medical or mental-health care.";
+
 export function ChatWindow({ persona, conversation }) {
   const bottomRef = useRef(null);
   const containerRef = useRef(null);
@@ -105,6 +108,7 @@ export function ChatWindow({ persona, conversation }) {
 
   const isEmpty = messages.length === 0;
   const hasFailedAuthMsg = messages.some((m) => m.isError);
+  const isWakingUp = apiMode === "live" && warmupStatus === "warming";
 
   return (
     <div className="flex h-full relative overflow-hidden bg-[var(--color-bg-base)] text-[var(--color-text-primary)] transition-colors duration-300 font-sans">
@@ -112,6 +116,26 @@ export function ChatWindow({ persona, conversation }) {
       <div className="flex-1 flex flex-col min-w-0 h-full relative overflow-hidden">
         {/* Ambient radial light */}
         <div className="absolute inset-x-0 top-0 h-[380px] bg-[radial-gradient(circle_at_50%_-15%,var(--color-accent-subtle),transparent_68%)] pointer-events-none" />
+
+        {/* Model Waking Up Notice Banner (while POST /v1/warmup is in flight) */}
+        <AnimatePresence>
+          {isWakingUp && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="flex-shrink-0 relative z-20 bg-amber-500/10 border-b border-amber-500/25 px-4 py-2 text-center"
+            >
+              <p className="text-xs font-medium text-amber-600 dark:text-amber-300 inline-flex items-center gap-2">
+                <Flame size={13} className="animate-pulse shrink-0" />
+                <span>
+                  Waking up model, this can take a few minutes after idle sleep
+                  — you can ask your question right away.
+                </span>
+              </p>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Conversation Sub-Toolbar (visible when messages exist) */}
         {!isEmpty && (
@@ -216,7 +240,7 @@ export function ChatWindow({ persona, conversation }) {
                   </span>
                 </div>
 
-                {/* Clean Editorial Headline (without "Hello, I'm Joshua.") */}
+                {/* Clean Editorial Headline */}
                 <h1 className="mt-4 max-w-2xl text-2xl sm:text-[38px] leading-[1.1] tracking-[-0.03em] font-extrabold text-[var(--color-text-primary)]">
                   What would you like to{" "}
                   <span className="font-serif italic font-normal text-[var(--color-accent)]">
@@ -244,40 +268,42 @@ export function ChatWindow({ persona, conversation }) {
 
                 {/* Starter Inquiry Grid */}
                 <div className="mt-5 w-full max-w-[700px] grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-left">
-                  {(persona?.suggestedPrompts || []).slice(0, 4).map((prompt, index) => {
-                    const mode = STARTER_MODES[index % STARTER_MODES.length];
-                    const ModeIcon = mode.icon;
+                  {(persona?.suggestedPrompts || [])
+                    .slice(0, 4)
+                    .map((prompt, index) => {
+                      const mode = STARTER_MODES[index % STARTER_MODES.length];
+                      const ModeIcon = mode.icon;
 
-                    return (
-                      <motion.button
-                        key={prompt}
-                        type="button"
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.08 + index * 0.04 }}
-                        onClick={() => handleSend(prompt)}
-                        className="group p-3.5 rounded-2xl bg-[var(--color-bg-elevated)] border border-[var(--color-border)] hover:border-[var(--color-accent)]/50 flex items-start justify-between gap-3 text-left shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer"
-                      >
-                        <div className="flex items-start gap-3 min-w-0">
-                          <span className="w-8 h-8 rounded-xl bg-[var(--color-accent-subtle)] text-[var(--color-accent)] flex items-center justify-center shrink-0 mt-0.5">
-                            <ModeIcon size={14} />
-                          </span>
-                          <div className="min-w-0">
-                            <span className="block text-[10px] font-mono font-semibold uppercase tracking-wider text-[var(--color-text-tertiary)]">
-                              {mode.label}
+                      return (
+                        <motion.button
+                          key={prompt}
+                          type="button"
+                          initial={{ opacity: 0, y: 8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.08 + index * 0.04 }}
+                          onClick={() => handleSend(prompt)}
+                          className="group p-3.5 rounded-2xl bg-[var(--color-bg-elevated)] border border-[var(--color-border)] hover:border-[var(--color-accent)]/50 flex items-start justify-between gap-3 text-left shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer"
+                        >
+                          <div className="flex items-start gap-3 min-w-0">
+                            <span className="w-8 h-8 rounded-xl bg-[var(--color-accent-subtle)] text-[var(--color-accent)] flex items-center justify-center shrink-0 mt-0.5">
+                              <ModeIcon size={14} />
                             </span>
-                            <span className="block mt-0.5 text-xs sm:text-[13px] font-semibold leading-snug text-[var(--color-text-primary)] group-hover:text-[var(--color-accent)] transition-colors">
-                              {prompt}
-                            </span>
+                            <div className="min-w-0">
+                              <span className="block text-[10px] font-mono font-semibold uppercase tracking-wider text-[var(--color-text-tertiary)]">
+                                {mode.label}
+                              </span>
+                              <span className="block mt-0.5 text-xs sm:text-[13px] font-semibold leading-snug text-[var(--color-text-primary)] group-hover:text-[var(--color-accent)] transition-colors">
+                                {prompt}
+                              </span>
+                            </div>
                           </div>
-                        </div>
-                        <ArrowUpRight
-                          size={14}
-                          className="shrink-0 mt-1 text-[var(--color-text-tertiary)] group-hover:text-[var(--color-accent)] transition-colors"
-                        />
-                      </motion.button>
-                    );
-                  })}
+                          <ArrowUpRight
+                            size={14}
+                            className="shrink-0 mt-1 text-[var(--color-text-tertiary)] group-hover:text-[var(--color-accent)] transition-colors"
+                          />
+                        </motion.button>
+                      );
+                    })}
                 </div>
 
                 {/* Trust & Pipeline Footer */}
@@ -308,7 +334,7 @@ export function ChatWindow({ persona, conversation }) {
                         ? warmupStatus === "warm"
                           ? "Modal GPU Warm (~2s)"
                           : warmupStatus === "warming"
-                          ? "Warming Modal GPU..."
+                          ? "Waking up, this can take a few minutes..."
                           : "Live Persona Model"
                         : "Demo Simulation Mode"}
                     </span>
@@ -318,6 +344,11 @@ export function ChatWindow({ persona, conversation }) {
                     <span>Safety Guardrails Active</span>
                   </span>
                 </div>
+
+                {/* Permanent Disclosure */}
+                <p className="mt-4 max-w-xl text-[11px] leading-relaxed text-[var(--color-text-tertiary)]">
+                  {PERMANENT_DISCLOSURE}
+                </p>
               </motion.div>
             ) : (
               <div className="space-y-6 pt-6 sm:pt-8">
@@ -358,7 +389,7 @@ export function ChatWindow({ persona, conversation }) {
           )}
         </AnimatePresence>
 
-        {/* Bottom Docked Composer (when conversation is active) */}
+        {/* Bottom Docked Composer + Permanent Disclosure (when conversation is active) */}
         {!isEmpty && (
           <div className="flex-shrink-0 relative z-20 bg-gradient-to-t from-[var(--color-bg-base)] via-[var(--color-bg-base)] via-85% to-transparent pt-4 pb-3 sm:pb-4">
             <div className="max-w-[780px] mx-auto w-full px-4 sm:px-8">
@@ -369,13 +400,9 @@ export function ChatWindow({ persona, conversation }) {
                 persona={persona}
                 sourceCount={sourceCount}
               />
-              <div className="mt-2 flex items-center justify-center gap-3 text-[10px] text-[var(--color-text-tertiary)]">
-                <span>
-                  {isSelman
-                    ? "Joshua Selman · Grounded in 657 sermons"
-                    : `${persona?.name || "Persona"} · Grounded in ${sourceCount} works`}
-                </span>
-              </div>
+              <p className="mt-2 text-center text-[10.5px] leading-snug text-[var(--color-text-tertiary)] max-w-2xl mx-auto">
+                {PERMANENT_DISCLOSURE}
+              </p>
             </div>
           </div>
         )}

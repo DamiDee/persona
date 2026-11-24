@@ -33,6 +33,18 @@ export const mockChats = [
         content:
           "Walking in the Spirit is not a feeling — it is a posture of surrender and awareness. It means allowing the Holy Spirit to be the governing reality of every decision, every reaction, every word. Paul described it as keeping in step — like two people walking together in sync.\n\nIt begins with yielding: choosing to consult the Spirit before acting on instinct. Over time, that consultation becomes second nature — not a discipline you force, but a relationship you maintain.",
         timestamp: new Date(now.getTime() - 24 * 60 * 1000).toISOString(),
+        usedContext: true,
+        sources: [
+          {
+            id: 4412,
+            title: "August 2024 Miracle Service With Apostle Joshua Selman",
+            source: "cleaned_AUGUST2024_MIRACLE_SERVICE.txt",
+            chunk_index: 37,
+            similarity: 0.562,
+            excerpt:
+              "...the discerning, the celebrating and the rewarding of spiritual truth in the heart of a believer who walks in step with the Holy Spirit...",
+          },
+        ],
       },
       {
         id: "msg-01-3",
@@ -44,8 +56,20 @@ export const mockChats = [
         id: "msg-01-4",
         role: "persona",
         content:
-          "Grace isn't a license to be passive — it's the empowerment to be what you couldn't be on your own. Titus 2 tells us that grace teaches us to say no to ungodliness. So grace is the tutor, the strength, and the covering — all at once.",
+          "Grace isn't a license to be passive — it's the empowerment to be what you couldn't be on your own. **Titus 2:11-12** tells us that grace teaches us to say no to ungodliness. So grace is the tutor, the strength, and the covering — all at once.",
         timestamp: new Date(now.getTime() - 20 * 60 * 1000).toISOString(),
+        usedContext: true,
+        sources: [
+          {
+            id: 3108,
+            title: "The Administration of Grace — Apostle Joshua Selman",
+            source: "cleaned_ADMINISTRATION_OF_GRACE_KOINONIA.txt",
+            chunk_index: 22,
+            similarity: 0.614,
+            excerpt:
+              "...grace is not an excuse for spiritual laziness; grace is divine enablement granted to a man to become what flesh and blood cannot produce...",
+          },
+        ],
       },
     ],
   },

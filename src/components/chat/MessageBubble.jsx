@@ -1,9 +1,12 @@
 // MessageBubble.jsx — iMessage & ChatGPT inspired conversational bubble component
-// Tactile squircle geometry, elevated glass surfaces, rich typography, and hidden citations.
+// Implements Markdown rendering (no raw HTML), collapsible "Sermons drawn on" RAG sources,
+// crisis guardrail notice styling (no regenerate), and cold-start waiting indicator.
 
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
+  BookOpen,
+  ChevronDown,
   Copy,
   Check,
   RotateCcw,
@@ -19,7 +22,6 @@ import { TypingIndicator } from "./TypingIndicator";
 import { useToast } from "../ui/Toast";
 import { useReducedMotion } from "../../hooks/useReducedMotion";
 import { useChatStore } from "../../store/useChatStore";
-import { resolveApiPersonaId } from "../../data/mockPersonas";
 
 function formatTime(timestamp) {
   try {
@@ -33,7 +35,8 @@ function formatTime(timestamp) {
 }
 
 /**
- * Renders inline formatting (**bold**, *italic*, `code`) safely as React elements.
+ * Renders inline Markdown (**bold**, *italic*, `code`) safely as React elements
+ * with raw HTML disabled. Gracefully handles unclosed markers mid-stream.
  */
 function renderInlineFormatting(text) {
   if (!text) return null;
@@ -71,7 +74,7 @@ function renderInlineFormatting(text) {
 }
 
 /**
- * Editorial block renderer for assistant responses (paragraphs, lists, quotes, headings).
+ * Safe Markdown renderer (raw HTML disabled) for assistant responses.
  */
 function FormattedMessageContent({ content }) {
   if (!content) return null;
@@ -171,8 +174,11 @@ function FormattedMessageContent({ content }) {
   );
 }
 
-function StreamWaitingStatus({ persona }) {
-  const { streamPhase, streamStartedAt } = useChatStore();
+/**
+ * Waiting state shown between `start` / `sources` and the first `delta` token.
+ */
+function StreamWaitingStatus({ persona, sourcesCount = 0 }) {
+  const { streamPhase, streamStartedAt, warmupStatus } = useChatStore();
   const [elapsedSec, setElapsedSec] = useState(0);
 
   useEffect(() => {
@@ -185,8 +191,10 @@ function StreamWaitingStatus({ persona }) {
     return () => clearInterval(interval);
   }, [streamStartedAt]);
 
-  const apiSlug = resolveApiPersonaId(persona);
-  const isColdStart = streamPhase === "cold_start" || elapsedSec >= 4;
+  const isColdStart =
+    streamPhase === "cold_start" ||
+    warmupStatus === "warming" ||
+    elapsedSec >= 4;
 
   return (
     <div className="py-1 space-y-2.5">
@@ -194,19 +202,106 @@ function StreamWaitingStatus({ persona }) {
         <TypingIndicator />
         <span className="text-xs font-medium text-[var(--color-text-secondary)]">
           {isColdStart
-            ? `Waking Modal GPU (${apiSlug}) · ${elapsedSec}s`
-            : `${persona?.name || "Persona"} is thinking...`}
+            ? `Waking up model, this can take a few minutes (${elapsedSec}s)...`
+            : sourcesCount > 0
+            ? `Drawing on ${sourcesCount} sermon${
+                sourcesCount === 1 ? "" : "s"
+              }...`
+            : `${persona?.name || "Joshua Selman"} is responding...`}
         </span>
       </div>
       {isColdStart && (
         <div className="p-3 rounded-2xl bg-[var(--color-accent-subtle)] border border-[var(--color-accent)]/20 text-[11px] text-[var(--color-text-secondary)] max-w-md leading-relaxed">
           <span className="font-bold text-[var(--color-accent)]">
-            Cold Start in Progress:
+            Waking up model:
           </span>{" "}
-          Waking the dedicated GPU takes ~3–4 minutes when idle. Once warm,
-          replies stream in ~2 seconds.
+          After 5 idle minutes the model sleeps and takes up to about 4 minutes
+          to wake. Once warm, replies stream in ~2 seconds.
         </div>
       )}
+    </div>
+  );
+}
+
+/**
+ * Collapsible "Sermons drawn on" list under the reply.
+ * Displays each source's `title` with its `excerpt` in quotes.
+ */
+function SermonsDrawnOn({ sources = [] }) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  if (!Array.isArray(sources) || sources.length === 0) return null;
+
+  return (
+    <div className="w-full mt-2">
+      <button
+        type="button"
+        onClick={() => setIsOpen((prev) => !prev)}
+        aria-expanded={isOpen}
+        className={clsx(
+          "inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-semibold border transition-all cursor-pointer select-none",
+          isOpen
+            ? "bg-[var(--color-accent-subtle)] border-[var(--color-accent)]/40 text-[var(--color-accent)]"
+            : "bg-[var(--color-bg-elevated)] border-[var(--color-border)] hover:border-[var(--color-border-strong)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+        )}
+      >
+        <BookOpen size={12} className="text-[var(--color-accent)] shrink-0" />
+        <span>
+          Sermons drawn on ({sources.length})
+        </span>
+        <ChevronDown
+          size={13}
+          className={clsx(
+            "transition-transform duration-200",
+            isOpen ? "rotate-180 text-[var(--color-accent)]" : ""
+          )}
+        />
+      </button>
+
+      <AnimatePresence initial={false}>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.22, ease: "easeOut" }}
+            className="overflow-hidden"
+          >
+            <div className="mt-2 p-3.5 rounded-2xl bg-[var(--color-bg-secondary)] border border-[var(--color-border)] space-y-3">
+              <p className="text-[11px] text-[var(--color-text-tertiary)] leading-relaxed">
+                Sermons the answer drew on from the corpus (the model may not
+                use every one):
+              </p>
+
+              <div className="space-y-2.5">
+                {sources.map((src, index) => (
+                  <div
+                    key={src.id || `${src.source}-${src.chunk_index}-${index}`}
+                    className="p-3 rounded-xl bg-[var(--color-bg-elevated)] border border-[var(--color-border)] space-y-1.5"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-xs font-bold text-[var(--color-text-primary)] leading-snug">
+                        {src.title || src.source || `Sermon #${index + 1}`}
+                      </p>
+                      {typeof src.similarity === "number" && (
+                        <span className="shrink-0 px-1.5 py-0.5 rounded bg-[var(--color-accent-subtle)] text-[var(--color-accent)] font-mono text-[10px] font-semibold">
+                          {Math.round(src.similarity * 100)}%
+                        </span>
+                      )}
+                    </div>
+
+                    {src.excerpt && (
+                      <p className="text-xs italic text-[var(--color-text-secondary)] leading-relaxed">
+                        “{src.excerpt.trim()}”
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -226,6 +321,7 @@ export function MessageBubble({
 
   const isCrisisGuardrail =
     message.finishReason === "guardrail" || message.guardrail === "crisis";
+  const sources = Array.isArray(message.sources) ? message.sources : [];
 
   const handleCopy = async () => {
     if (!message.content) return;
@@ -249,7 +345,11 @@ export function MessageBubble({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: prefersReduced ? 0 : 10, scale: prefersReduced ? 1 : 0.99 }}
+      initial={{
+        opacity: 0,
+        y: prefersReduced ? 0 : 10,
+        scale: prefersReduced ? 1 : 0.99,
+      }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.26, ease: [0.16, 1, 0.3, 1] }}
       className={clsx(
@@ -290,7 +390,7 @@ export function MessageBubble({
             </span>
             {isCrisisGuardrail ? (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-[10px] font-bold text-amber-500">
-                <ShieldAlert size={11} /> Safety Support
+                <ShieldAlert size={11} /> Safety Notice
               </span>
             ) : (
               <span className="text-[11px] font-medium text-[var(--color-text-tertiary)]">
@@ -302,19 +402,7 @@ export function MessageBubble({
           </div>
         )}
 
-        {/* Crisis Guardrail Callout Banner */}
-        {!isUser && isCrisisGuardrail && (
-          <div className="w-full mb-2 p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-2.5 text-xs text-amber-600 dark:text-amber-300">
-            <ShieldAlert size={16} className="shrink-0 mt-0.5" />
-            <div className="leading-relaxed">
-              <span className="font-bold">Crisis Guardrail Response:</span> This
-              is a fixed support message provided by the safety guardrail
-              system, not generative model output.
-            </div>
-          </div>
-        )}
-
-        {/* Error / Auth Required Recovery Card */}
+        {/* Error / Auth Required Recovery Card (half reply never saved) */}
         {!isUser && message.isError ? (
           <div className="w-full p-4 sm:p-5 rounded-[24px] rounded-tl-[6px] bg-[var(--color-bg-elevated)] border border-[var(--color-border-strong)] shadow-md space-y-3.5">
             <div className="flex items-start gap-3">
@@ -331,7 +419,7 @@ export function MessageBubble({
                 <p className="text-xs sm:text-sm font-bold text-[var(--color-text-primary)]">
                   {message.isAuthError
                     ? "API Key Required for Live GPU Streaming"
-                    : "Connection Interrupted"}
+                    : "Unable to Complete Reply"}
                 </p>
                 <p className="text-xs text-[var(--color-text-secondary)] leading-relaxed">
                   {message.errorMessage}
@@ -340,35 +428,37 @@ export function MessageBubble({
             </div>
 
             <div className="flex items-center gap-2 flex-wrap pt-1">
-              <button
-                type="button"
-                onClick={() => setApiModalOpen(true)}
-                className="px-3.5 py-2 rounded-full bg-[var(--color-accent)] hover:bg-[var(--color-accent-glow)] text-[var(--color-button-text)] text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
-              >
-                <KeyRound size={12} />
-                <span>Connect API Key</span>
-              </button>
+              {onRegenerate && (
+                <button
+                  type="button"
+                  onClick={() => onRegenerate({ forceDemo: false })}
+                  className="px-3.5 py-2 rounded-full bg-[var(--color-accent)] hover:bg-[var(--color-accent-glow)] text-[var(--color-button-text)] text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
+                >
+                  <RotateCcw size={12} />
+                  <span>Retry</span>
+                </button>
+              )}
+
+              {message.isAuthError && (
+                <button
+                  type="button"
+                  onClick={() => setApiModalOpen(true)}
+                  className="px-3.5 py-2 rounded-full bg-[var(--color-bg-tertiary)] hover:bg-[var(--color-border)] border border-[var(--color-border)] text-xs font-semibold text-[var(--color-text-primary)] flex items-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <KeyRound size={12} />
+                  <span>Connect API Key</span>
+                </button>
+              )}
 
               {onRegenerate && (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => onRegenerate({ forceDemo: false })}
-                    className="px-3.5 py-2 rounded-full bg-[var(--color-bg-tertiary)] hover:bg-[var(--color-border)] border border-[var(--color-border)] text-xs font-semibold text-[var(--color-text-primary)] flex items-center gap-1.5 transition-colors cursor-pointer"
-                  >
-                    <RotateCcw size={12} />
-                    <span>Retry</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => onRegenerate({ forceDemo: true })}
-                    className="px-3.5 py-2 rounded-full bg-[var(--color-bg-tertiary)] hover:bg-[var(--color-border)] border border-[var(--color-border)] text-xs font-semibold text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] flex items-center gap-1.5 transition-colors cursor-pointer"
-                  >
-                    <Sparkles size={12} className="text-[var(--color-accent)]" />
-                    <span>Simulate Reply</span>
-                  </button>
-                </>
+                <button
+                  type="button"
+                  onClick={() => onRegenerate({ forceDemo: true })}
+                  className="px-3.5 py-2 rounded-full bg-[var(--color-bg-tertiary)] hover:bg-[var(--color-border)] border border-[var(--color-border)] text-xs font-semibold text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] flex items-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <Sparkles size={12} className="text-[var(--color-accent)]" />
+                  <span>Simulate Reply</span>
+                </button>
               )}
             </div>
           </div>
@@ -388,18 +478,32 @@ export function MessageBubble({
             </p>
           </div>
         ) : (
-          /* ChatGPT + iMessage Refined Assistant Bubble Card */
+          /* ChatGPT + iMessage Refined Assistant Bubble Card (distinct notice style on crisis replies) */
           <div
             className={clsx(
-              "relative w-full px-5 py-4 sm:px-6 sm:py-5 rounded-[24px] rounded-tl-[6px]",
-              "bg-[var(--color-bg-elevated)] border border-[var(--color-border-strong)]/80",
-              "shadow-[0_8px_30px_-8px_rgba(15,23,42,0.07),inset_0_1px_0_rgba(255,255,255,0.06)]",
-              "dark:shadow-[0_14px_36px_-10px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,255,255,0.04)]",
-              "text-[var(--color-text-primary)] transition-all duration-200"
+              "relative w-full px-5 py-4 sm:px-6 sm:py-5 rounded-[24px] rounded-tl-[6px] transition-all duration-200",
+              isCrisisGuardrail
+                ? "bg-amber-500/[0.08] border-2 border-amber-500/40 text-[var(--color-text-primary)] shadow-sm"
+                : [
+                    "bg-[var(--color-bg-elevated)] border border-[var(--color-border-strong)]/80",
+                    "shadow-[0_8px_30px_-8px_rgba(15,23,42,0.07),inset_0_1px_0_rgba(255,255,255,0.06)]",
+                    "dark:shadow-[0_14px_36px_-10px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,255,255,0.04)]",
+                    "text-[var(--color-text-primary)]",
+                  ]
             )}
           >
+            {isCrisisGuardrail && (
+              <div className="mb-3 pb-2.5 border-b border-amber-500/25 flex items-center gap-2 text-xs font-bold text-amber-600 dark:text-amber-300">
+                <ShieldAlert size={15} className="shrink-0" />
+                <span>Support &amp; Helpline Notice</span>
+              </div>
+            )}
+
             {isStreaming && !message.content ? (
-              <StreamWaitingStatus persona={persona} />
+              <StreamWaitingStatus
+                persona={persona}
+                sourcesCount={sources.length}
+              />
             ) : (
               <div className="relative">
                 <FormattedMessageContent content={message.content} />
@@ -416,7 +520,12 @@ export function MessageBubble({
           </div>
         )}
 
-        {/* Assistant Action Bar (ChatGPT-style clean icon bar, citations hidden) */}
+        {/* Collapsible "Sermons drawn on" list (when sources are returned by RAG) */}
+        {!isUser && !message.isError && sources.length > 0 && (
+          <SermonsDrawnOn sources={sources} />
+        )}
+
+        {/* Assistant Action Bar (Never offer Regenerate on crisis guardrail replies) */}
         {!isUser && !isStreaming && message.content && !message.isError && (
           <div className="flex items-center gap-1.5 px-1.5 pt-1.5">
             <button
@@ -439,7 +548,7 @@ export function MessageBubble({
               )}
             </button>
 
-            {isLastPersonaMessage && onRegenerate && (
+            {!isCrisisGuardrail && isLastPersonaMessage && onRegenerate && (
               <button
                 type="button"
                 onClick={() => onRegenerate()}

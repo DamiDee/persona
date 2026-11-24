@@ -9,7 +9,10 @@ export const config = {
 
 export default async function handler(req) {
   const url = new URL(req.url);
-  const path = url.pathname.replace(/^\/api/, "") || "/";
+  let path = url.pathname.replace(/^\/api/, "") || "/";
+  if (path === "/chat" || path === "/warmup" || path === "/personas") {
+    path = `/v1${path}`;
+  }
 
   const targetBase = (
     process.env.PERSONA_API_URL ||

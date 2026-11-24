@@ -42,7 +42,17 @@ function personaApiProxyPlugin(env) {
       }
 
       try {
-        const targetUrl = `${targetBase}${req.url || ""}`;
+        // Normalize shorthand paths (/api/chat -> /v1/chat, /api/warmup -> /v1/warmup, /api/personas -> /v1/personas)
+        let upstreamPath = req.url || "";
+        if (upstreamPath === "/chat" || upstreamPath.startsWith("/chat?")) {
+          upstreamPath = `/v1${upstreamPath}`;
+        } else if (upstreamPath === "/warmup" || upstreamPath.startsWith("/warmup?")) {
+          upstreamPath = `/v1${upstreamPath}`;
+        } else if (upstreamPath === "/personas" || upstreamPath.startsWith("/personas?")) {
+          upstreamPath = `/v1${upstreamPath}`;
+        }
+
+        const targetUrl = `${targetBase}${upstreamPath}`;
         const clientAuth = req.headers["authorization"];
         const clientKey = req.headers["x-chat-api-key"];
 

@@ -1,5 +1,5 @@
 // ============================================================
-// useChatStore — Zustand Chat & Modal Serving API State
+// useChatStore — Zustand Chat & Modal Serving API State (with RAG Sources)
 // Manages conversations, SSE streaming (/v1/chat), GPU warmup (/v1/warmup),
 // persona registry discovery (/v1/personas), and health checks (/health).
 // ============================================================
@@ -41,6 +41,27 @@ function buildConversationTitle(content, personaName) {
   return `${cleaned.slice(0, 42).trim()}…`;
 }
 
+const DEMO_RAG_SOURCES = [
+  {
+    id: 4412,
+    title: "August 2024 Miracle Service With Apostle Joshua Selman",
+    source: "cleaned_AUGUST2024_MIRACLE_SERVICE.txt",
+    chunk_index: 37,
+    similarity: 0.562,
+    excerpt:
+      "...the discerning, the celebrating and the rewarding of spiritual truth in the heart of a believer who desires alignment with the Holy Spirit...",
+  },
+  {
+    id: 1984,
+    title: "Spiritual Intelligence & Walking In The Spirit — Koinonia Global",
+    source: "cleaned_SPIRITUAL_INTELLIGENCE_KOINONIA.txt",
+    chunk_index: 14,
+    similarity: 0.531,
+    excerpt:
+      "...prayer is not merely a transaction; it is the furnace where your spirit comes into alignment with the stature and the mind of Christ...",
+  },
+];
+
 export const useChatStore = create(
   persist(
     (set, get) => ({
@@ -55,6 +76,10 @@ export const useChatStore = create(
       streamingMessageId: null,
       streamPhase: "idle", // "idle" | "connecting" | "cold_start" | "streaming"
       streamStartedAt: null,
+
+      // Chat request parameters (from Handover spec)
+      responseLength: "normal", // "short" | "normal" | "long"
+      responseFormat: "markdown", // "markdown" | "plain"
 
       // Modal API & GPU state
       apiMode: "live", // "live" | "demo"
@@ -81,8 +106,12 @@ export const useChatStore = create(
       },
 
       getActivePersona: () => {
-        const { activePersonaId, personas, conversations, activeConversationId } =
-          get();
+        const {
+          activePersonaId,
+          personas,
+          conversations,
+          activeConversationId,
+        } = get();
         const conv = conversations.find((c) => c.id === activeConversationId);
         const targetId = conv?.personaId || activePersonaId || "persona-01";
         return (
@@ -98,6 +127,19 @@ export const useChatStore = create(
         const { lastWarmupAt, warmupStatus } = get();
         if (warmupStatus !== "warm" || !lastWarmupAt) return false;
         return Date.now() - lastWarmupAt < GPU_WARM_WINDOW_MS;
+      },
+
+      // --- Request Parameter Actions ---
+      setResponseLength: (length) => {
+        if (["short", "normal", "long"].includes(length)) {
+          set({ responseLength: length });
+        }
+      },
+
+      setResponseFormat: (format) => {
+        if (["markdown", "plain"].includes(format)) {
+          set({ responseFormat: format });
+        }
       },
 
       // --- API Configuration & Diagnostics ---
@@ -125,7 +167,6 @@ export const useChatStore = create(
           apiKeyConfigured: hasKey,
         });
 
-        // Re-verify health, personas, and warmup when credentials are saved
         get().checkHealth();
         if (hasKey) {
           get().syncPersonas();
@@ -151,6 +192,7 @@ export const useChatStore = create(
 
       /**
        * POST /v1/warmup — Wakes the Modal L40S GPU when the chat page opens.
+       * Returns {"ready": true} once the model is up (can take up to ~4 minutes).
        */
       warmupGpu: async ({ force = false } = {}) => {
         const { isGpuCurrentlyWarm, apiMode } = get();
@@ -168,7 +210,7 @@ export const useChatStore = create(
           try {
             const res = await warmupPersonaGpu();
             set({
-              warmupStatus: "warm",
+              warmupStatus: res?.ready !== false ? "warm" : "warming",
               lastWarmupAt: Date.now(),
               warmupError: null,
               healthStatus: "healthy",
@@ -206,11 +248,13 @@ export const useChatStore = create(
           set((state) => {
             const updatedPersonas = state.personas.map((p) => {
               const match = remoteList.find((r) => {
-                const rId = typeof r === "string" ? r : r.id || r.persona || r.slug;
+                const rId =
+                  typeof r === "string" ? r : r.id || r.persona || r.slug;
                 return rId === p.apiPersonaId || rId === p.id;
               });
               if (match) {
-                const remoteObj = typeof match === "object" ? match : { id: match };
+                const remoteObj =
+                  typeof match === "object" ? match : { id: match };
                 return {
                   ...p,
                   isLiveAdapter: true,
@@ -220,7 +264,6 @@ export const useChatStore = create(
               return p;
             });
 
-            // Add any additional personas from the server that aren't in our local catalog
             for (const item of remoteList) {
               const rId =
                 typeof item === "string"
@@ -232,7 +275,8 @@ export const useChatStore = create(
               );
               if (!exists) {
                 const name =
-                  (typeof item === "object" && (item.name || item.display_name)) ||
+                  (typeof item === "object" &&
+                    (item.name || item.display_name)) ||
                   rId.toUpperCase();
                 updatedPersonas.push({
                   id: `persona-${rId}`,
@@ -250,7 +294,7 @@ export const useChatStore = create(
                   longBio:
                     (typeof item === "object" && item.system_prompt) ||
                     `Connected directly to the '${rId}' adapter on the Modal serving pipeline.`,
-                  sourceMaterial: [{ type: "Corpus", count: 20 }],
+                  sourceMaterial: [{ type: "Sermons", count: 657 }],
                   isPremium: false,
                   avatar: "/avatar-selman.png",
                   avatarGradient: ["#0891b2", "#0e7490"],
@@ -260,7 +304,7 @@ export const useChatStore = create(
                     "What principle should guide my decisions today?",
                     "Share a foundational teaching with me",
                   ],
-                  greeting: `Peace to you. I am connected to the live ${name} model. What would you like to explore?`,
+                  greeting: `Peace to you. What is on your heart today — what would you like to understand more deeply?`,
                 });
               }
             }
@@ -296,7 +340,8 @@ export const useChatStore = create(
         const resolvedPersonaId = personaId || activePersonaId || "persona-01";
         const persona =
           personas.find(
-            (p) => p.id === resolvedPersonaId || p.apiPersonaId === resolvedPersonaId
+            (p) =>
+              p.id === resolvedPersonaId || p.apiPersonaId === resolvedPersonaId
           ) || getPersonaById(resolvedPersonaId);
 
         const newChat = {
@@ -327,16 +372,20 @@ export const useChatStore = create(
             c.id === activeConversationId
               ? {
                   ...c,
-                  messages: c.messages.map((m) =>
-                    m.id === streamingMessageId
-                      ? {
-                          ...m,
-                          isStreaming: false,
-                          finishReason: "stopped",
-                          content: m.content || "Generation stopped.",
-                        }
-                      : m
-                  ),
+                  // If user stops before any text arrived, remove empty placeholder; otherwise keep partial
+                  messages: c.messages
+                    .map((m) =>
+                      m.id === streamingMessageId
+                        ? m.content
+                          ? {
+                              ...m,
+                              isStreaming: false,
+                              finishReason: "stopped",
+                            }
+                          : null
+                        : m
+                    )
+                    .filter(Boolean),
                 }
               : c
           ),
@@ -348,7 +397,7 @@ export const useChatStore = create(
       },
 
       /**
-       * Sends a user message and streams the reply from POST /v1/chat (or demo fallback).
+       * Sends a user message and streams the reply + RAG sermon sources from POST /v1/chat.
        */
       sendMessage: async (content, { forceDemo = false } = {}) => {
         const trimmed = typeof content === "string" ? content.trim() : "";
@@ -361,10 +410,13 @@ export const useChatStore = create(
           personas,
           apiMode,
           useStreamProtocol,
+          responseLength,
+          responseFormat,
         } = get();
 
-        // Ensure an active conversation exists even if user typed from an empty /app/chat route
-        let targetConv = conversations.find((c) => c.id === activeConversationId);
+        let targetConv = conversations.find(
+          (c) => c.id === activeConversationId
+        );
         if (!targetConv) {
           const newId = get().createNewChat(activePersonaId || "persona-01");
           activeConversationId = newId;
@@ -372,9 +424,12 @@ export const useChatStore = create(
           targetConv = conversations.find((c) => c.id === newId);
         }
 
-        const personaId = targetConv?.personaId || activePersonaId || "persona-01";
+        const personaId =
+          targetConv?.personaId || activePersonaId || "persona-01";
         const persona =
-          personas.find((p) => p.id === personaId || p.apiPersonaId === personaId) ||
+          personas.find(
+            (p) => p.id === personaId || p.apiPersonaId === personaId
+          ) ||
           getPersonaById(personaId) ||
           personas[0];
 
@@ -394,24 +449,28 @@ export const useChatStore = create(
           timestamp: new Date().toISOString(),
           isStreaming: true,
           modelPersona: apiPersonaSlug,
+          sources: [],
           usedContext: false,
           finishReason: null,
           guardrail: null,
         };
 
-        // Auto-generate a clean conversation title on first message
+        const existingCleanMessages = (targetConv?.messages || []).filter(
+          (m) => !m.isError && !m.isStreaming
+        );
         const isFirstUserMessage =
-          (targetConv?.messages || []).filter((m) => m.role === "user").length === 0;
+          existingCleanMessages.filter((m) => m.role === "user").length === 0;
         const nextTitle = isFirstUserMessage
           ? buildConversationTitle(trimmed, persona?.name)
           : targetConv.title;
 
         const updatedMessagesForHistory = [
-          ...(targetConv?.messages || []).filter((m) => !m.isError),
+          ...existingCleanMessages,
           userMessage,
         ];
 
         const startedAt = Date.now();
+        const isWarm = get().isGpuCurrentlyWarm();
 
         set((state) => ({
           conversations: state.conversations.map((c) =>
@@ -420,7 +479,7 @@ export const useChatStore = create(
                   ...c,
                   title: nextTitle,
                   messages: [
-                    ...c.messages.filter((m) => !m.isError),
+                    ...existingCleanMessages,
                     userMessage,
                     streamingMessage,
                   ],
@@ -431,7 +490,7 @@ export const useChatStore = create(
           ),
           isStreaming: true,
           streamingMessageId: streamingMsgId,
-          streamPhase: "connecting",
+          streamPhase: isWarm ? "connecting" : "connecting",
           streamStartedAt: startedAt,
         }));
 
@@ -441,7 +500,8 @@ export const useChatStore = create(
         const abortController = new AbortController();
         activeAbortController = abortController;
 
-        // Cold-start timer: if first token takes > 3.5s, transition streamPhase to "cold_start"
+        // Cold-start timer: `start` arrives immediately even while the model is waking;
+        // if first `delta` takes > 3.5s, transition streamPhase to "cold_start"
         const coldStartTimer = setTimeout(() => {
           const current = get();
           if (
@@ -462,9 +522,30 @@ export const useChatStore = create(
           let finishReason = "stop";
           let usedContext = false;
           let guardrail = null;
+          let retrievedSources = [];
           let resolvedModelPersona = apiPersonaSlug;
 
           if (useMock) {
+            const isSelman =
+              persona?.id === "persona-01" || apiPersonaSlug === "ajs";
+            retrievedSources = isSelman ? DEMO_RAG_SOURCES : [];
+            usedContext = retrievedSources.length > 0;
+
+            set((state) => ({
+              conversations: state.conversations.map((c) =>
+                c.id === activeConversationId
+                  ? {
+                      ...c,
+                      messages: c.messages.map((m) =>
+                        m.id === streamingMsgId
+                          ? { ...m, sources: retrievedSources, usedContext }
+                          : m
+                      ),
+                    }
+                  : c
+              ),
+            }));
+
             const stream = chatApi.streamMessage(personaId, trimmed);
             for await (const chunk of stream) {
               if (abortController.signal.aborted) break;
@@ -485,6 +566,7 @@ export const useChatStore = create(
                             ? {
                                 ...m,
                                 content: fullContent,
+                                sources: retrievedSources,
                                 isDemoResponse: true,
                               }
                             : m
@@ -501,6 +583,8 @@ export const useChatStore = create(
               messages: updatedMessagesForHistory,
               userId: authUser?.id || authUser?.email || undefined,
               stream: useStreamProtocol,
+              length: responseLength,
+              format: responseFormat,
               signal: abortController.signal,
             });
 
@@ -508,13 +592,39 @@ export const useChatStore = create(
               if (abortController.signal.aborted) break;
 
               if (event.type === "start") {
+                // `start` arrives immediately, even while the model is waking.
+                // Keep waiting indicator up until first `delta` arrives.
                 resolvedModelPersona = event.persona || apiPersonaSlug;
-                set({
-                  warmupStatus: "warm",
-                  lastWarmupAt: Date.now(),
-                  healthStatus: "healthy",
-                });
-              } else if (event.type === "delta" && typeof event.text === "string") {
+                set({ healthStatus: "healthy" });
+              } else if (event.type === "sources") {
+                // `sources` arrives after retrieval, before any `delta` text
+                retrievedSources = Array.isArray(event.sources)
+                  ? event.sources
+                  : [];
+                usedContext = retrievedSources.length > 0;
+
+                set((state) => ({
+                  conversations: state.conversations.map((c) =>
+                    c.id === activeConversationId
+                      ? {
+                          ...c,
+                          messages: c.messages.map((m) =>
+                            m.id === streamingMsgId
+                              ? {
+                                  ...m,
+                                  sources: retrievedSources,
+                                  usedContext,
+                                }
+                              : m
+                          ),
+                        }
+                      : c
+                  ),
+                }));
+              } else if (
+                event.type === "delta" &&
+                typeof event.text === "string"
+              ) {
                 if (!firstTokenAt) {
                   firstTokenAt = Date.now();
                   clearTimeout(coldStartTimer);
@@ -522,6 +632,7 @@ export const useChatStore = create(
                     streamPhase: "streaming",
                     warmupStatus: "warm",
                     lastWarmupAt: Date.now(),
+                    healthStatus: "healthy",
                   });
                 }
                 fullContent += event.text;
@@ -544,6 +655,7 @@ export const useChatStore = create(
                               ? {
                                   ...m,
                                   content: fullContent,
+                                  sources: retrievedSources,
                                   modelPersona: resolvedModelPersona,
                                   ttftMs: firstTokenAt - startedAt,
                                   tokensPerSec: tokPerSec,
@@ -556,7 +668,10 @@ export const useChatStore = create(
                 }));
               } else if (event.type === "done") {
                 finishReason = event.finish_reason || "stop";
-                usedContext = Boolean(event.used_context);
+                usedContext =
+                  typeof event.used_context === "boolean"
+                    ? event.used_context
+                    : retrievedSources.length > 0;
                 guardrail = event.guardrail || null;
               } else if (event.type === "error") {
                 throw new Error(event.message || "Model generation failed.");
@@ -586,12 +701,15 @@ export const useChatStore = create(
                             ...m,
                             isStreaming: false,
                             content: fullContent,
+                            sources: retrievedSources,
                             modelPersona: resolvedModelPersona,
                             finishReason,
                             usedContext,
                             guardrail,
                             isDemoResponse: useMock,
-                            ttftMs: firstTokenAt ? firstTokenAt - startedAt : null,
+                            ttftMs: firstTokenAt
+                              ? firstTokenAt - startedAt
+                              : null,
                             tokensPerSec: finalTokPerSec,
                           }
                         : m
@@ -622,8 +740,13 @@ export const useChatStore = create(
             return;
           }
 
-          const isAuthError = err?.code === "AUTH_REQUIRED" || err?.status === 401 || err?.status === 403;
+          const isAuthError =
+            err?.code === "AUTH_REQUIRED" ||
+            err?.status === 401 ||
+            err?.status === 403;
 
+          // Handover rule: "On an error event, a non-200 status or a dropped connection,
+          // show the message with a Retry button and do not save the half reply into the conversation."
           set((state) => ({
             conversations: state.conversations.map((c) =>
               c.id === activeConversationId
@@ -633,6 +756,8 @@ export const useChatStore = create(
                       m.id === streamingMsgId
                         ? {
                             ...m,
+                            content: "", // Clear any half-streamed content so it is never saved
+                            sources: [],
                             isStreaming: false,
                             isError: true,
                             isAuthError,
@@ -661,6 +786,7 @@ export const useChatStore = create(
 
       /**
        * Regenerates the last assistant response (or retries a failed message).
+       * Never regenerates a crisis guardrail response.
        */
       regenerateLastPersonaMessage: async ({ forceDemo = false } = {}) => {
         const { activeConversationId, conversations, isStreaming } = get();
@@ -669,7 +795,15 @@ export const useChatStore = create(
         const conv = conversations.find((c) => c.id === activeConversationId);
         if (!conv || !conv.messages.length) return;
 
-        // Find the last user message
+        const lastMsg = conv.messages[conv.messages.length - 1];
+        if (
+          lastMsg &&
+          (lastMsg.finishReason === "guardrail" ||
+            lastMsg.guardrail === "crisis")
+        ) {
+          return;
+        }
+
         const messagesCopy = [...conv.messages];
         while (
           messagesCopy.length > 0 &&
@@ -681,7 +815,6 @@ export const useChatStore = create(
         const lastUserMessage = messagesCopy.pop();
         if (!lastUserMessage) return;
 
-        // Trim conversation back to before that user message and re-send
         set((state) => ({
           conversations: state.conversations.map((c) =>
             c.id === activeConversationId
@@ -732,6 +865,8 @@ export const useChatStore = create(
         activePersonaId: state.activePersonaId,
         apiMode: state.apiMode,
         useStreamProtocol: state.useStreamProtocol,
+        responseLength: state.responseLength,
+        responseFormat: state.responseFormat,
         lastWarmupAt: state.lastWarmupAt,
       }),
     }

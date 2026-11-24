@@ -1,5 +1,5 @@
 // ============================================================
-// PERSONA — Live Modal Serving API Client
+// PERSONA — Live Modal Serving API Client (with Supabase RAG Sources)
 // Implements /health, /v1/warmup, /v1/personas, and /v1/chat (SSE & JSON)
 // Base URL: https://vigo4real2016--persona-api.us-east.modal.run
 // ============================================================
@@ -13,6 +13,9 @@ export const DEFAULT_MODAL_BASE_URL =
 const STORAGE_KEY_API_KEY = "persona_chat_api_key";
 const STORAGE_KEY_BASE_URL = "persona_api_base_url";
 const STORAGE_KEY_USE_PROXY = "persona_api_use_proxy";
+
+const MAX_MESSAGES_PER_REQUEST = 200;
+const MAX_CHARS_PER_MESSAGE = 8000;
 
 export function getStoredApiKey() {
   if (typeof window === "undefined") return "";
@@ -115,7 +118,7 @@ export async function checkServerProxyStatus() {
 
 /**
  * GET /health
- * Does not require Authorization header.
+ * Liveness check, no key needed. Returns {"status": "ok"}.
  */
 export async function checkApiHealth() {
   const startedAt = performance.now();
@@ -129,7 +132,6 @@ export async function checkApiHealth() {
       redirect: "follow",
     });
 
-    // If /api proxy isn't mounted (e.g. static host), fallback to direct Modal URL
     if (res.status === 404 && url.startsWith("/api/")) {
       const direct = buildRequestConfig("/health", {
         requireAuth: false,
@@ -168,8 +170,8 @@ export async function checkApiHealth() {
 
 /**
  * POST /v1/warmup
- * Wakes the L40S GPU on Modal; call when the chat page opens.
- * GPU stays warm for 5 minutes after the last request.
+ * Wakes the model when the chat page opens.
+ * Returns {"ready": true} once the model is up (can take up to ~4 minutes on cold start).
  */
 export async function warmupPersonaGpu({ signal } = {}) {
   const startedAt = performance.now();
@@ -208,7 +210,7 @@ export async function warmupPersonaGpu({ signal } = {}) {
   const elapsedMs = Math.round(performance.now() - startedAt);
 
   if (res.status === 401 || res.status === 403) {
-    const err = new Error("Unauthorized: Valid CHAT_API_KEY required for /v1/warmup");
+    const err = new Error("Missing or wrong API key for /v1/warmup");
     err.code = "AUTH_REQUIRED";
     err.status = res.status;
     throw err;
@@ -224,15 +226,16 @@ export async function warmupPersonaGpu({ signal } = {}) {
     throw new Error(errText || `Warmup failed with HTTP ${res.status}`);
   }
 
-  let data = {};
+  let data = { ready: true };
   try {
     data = await res.json();
   } catch {
-    data = { status: "warm" };
+    data = { ready: true };
   }
 
   return {
     ok: true,
+    ready: data?.ready !== false,
     elapsedMs,
     data,
   };
@@ -240,7 +243,7 @@ export async function warmupPersonaGpu({ signal } = {}) {
 
 /**
  * GET /v1/personas
- * Lists personas registered in personas.py on the Modal server.
+ * Lists personas: [{"id": "ajs", "name": "Apostle Joshua Selman (AI persona)"}]
  */
 export async function fetchRemotePersonas({ signal } = {}) {
   const { url, headers } = buildRequestConfig("/v1/personas", {
@@ -268,7 +271,7 @@ export async function fetchRemotePersonas({ signal } = {}) {
   }
 
   if (res.status === 401 || res.status === 403) {
-    const err = new Error("Unauthorized: Valid CHAT_API_KEY required for /v1/personas");
+    const err = new Error("Missing or wrong API key for /v1/personas");
     err.code = "AUTH_REQUIRED";
     err.status = res.status;
     throw err;
@@ -280,8 +283,6 @@ export async function fetchRemotePersonas({ signal } = {}) {
 
   const payload = await res.json();
 
-  // Normalize response shape:
-  // Could be ["ajs"], { personas: [...] }, or { ajs: { ... } }
   if (Array.isArray(payload)) {
     return payload;
   }
@@ -290,7 +291,9 @@ export async function fetchRemotePersonas({ signal } = {}) {
   }
   if (payload && typeof payload === "object") {
     return Object.entries(payload).map(([id, val]) =>
-      typeof val === "object" && val !== null ? { id, ...val } : { id, name: String(val) }
+      typeof val === "object" && val !== null
+        ? { id, ...val }
+        : { id, name: String(val) }
     );
   }
   return [];
@@ -298,8 +301,9 @@ export async function fetchRemotePersonas({ signal } = {}) {
 
 /**
  * Converts internal conversation messages to the strict format required by POST /v1/chat:
- * - Roles must be "user" or "assistant" only ("persona" -> "assistant")
- * - Full conversation sent each time
+ * - 1 to 200 items, roles "user" / "assistant" only ("persona" -> "assistant")
+ * - Max 8,000 characters per message
+ * - Excludes any errored or incomplete streaming replies
  * - Last message must have role "user"
  */
 export function buildApiMessages(conversationMessages = [], latestUserContent = null) {
@@ -307,18 +311,23 @@ export function buildApiMessages(conversationMessages = [], latestUserContent = 
 
   for (const msg of conversationMessages) {
     if (!msg || msg.isStreaming || msg.isError) continue;
-    const content = typeof msg.content === "string" ? msg.content.trim() : "";
-    if (!content) continue;
+    const rawContent = typeof msg.content === "string" ? msg.content.trim() : "";
+    if (!rawContent) continue;
+
+    const content =
+      rawContent.length > MAX_CHARS_PER_MESSAGE
+        ? rawContent.slice(0, MAX_CHARS_PER_MESSAGE)
+        : rawContent;
 
     const role = msg.role === "user" ? "user" : "assistant";
     cleaned.push({ role, content });
   }
 
   if (latestUserContent && latestUserContent.trim()) {
-    const trimmed = latestUserContent.trim();
+    const trimmed = latestUserContent.trim().slice(0, MAX_CHARS_PER_MESSAGE);
     const last = cleaned[cleaned.length - 1];
     if (!last || last.role !== "user" || last.content !== trimmed) {
-      cleaned.push({ role: "user", content: trimmed });
+      cleaned.push({ role, content: trimmed });
     }
   }
 
@@ -327,23 +336,33 @@ export function buildApiMessages(conversationMessages = [], latestUserContent = 
     cleaned.pop();
   }
 
+  // Enforce 1 to 200 items limit
+  if (cleaned.length > MAX_MESSAGES_PER_REQUEST) {
+    return cleaned.slice(cleaned.length - MAX_MESSAGES_PER_REQUEST);
+  }
+
   return cleaned;
 }
 
 /**
  * POST /v1/chat
- * Streams SSE events from the Modal Persona API:
- * - {"type": "start", "persona": "ajs"}
- * - {"type": "delta", "text": "..."}
- * - {"type": "done", "finish_reason": "stop" | "guardrail", "used_context": false, "guardrail": "crisis"}
- * - {"type": "error", "message": "..."}
- * Also supports stream: false which returns {"reply": "...", "finish_reason": "stop"}.
+ * Streams SSE events from the Modal Persona API in order:
+ * 1. {"type": "start", "persona": "ajs"}
+ * 2. {"type": "sources", "sources": [{"id": 4412, "title": "...", "source": "...", "chunk_index": 37, "similarity": 0.562, "excerpt": "..."}]}
+ * 3. {"type": "delta", "text": "..."}
+ * 4. {"type": "done", "finish_reason": "stop" | "length" | "guardrail", "used_context": true, "guardrail": "crisis"}
+ * or {"type": "error", "message": "..."}
+ *
+ * Also supports stream: false which returns:
+ * {"reply": "...", "sources": [...], "finish_reason": "stop", "used_context": true}
  */
 export async function* streamPersonaChat({
-  persona,
+  persona = "ajs",
   messages,
   userId,
   stream = true,
+  length = "normal",
+  format = "markdown",
   signal,
 }) {
   const apiPersona = resolveApiPersonaId(persona);
@@ -353,11 +372,20 @@ export async function* streamPersonaChat({
     throw new Error("Cannot call /v1/chat without at least one user message.");
   }
 
+  const validLength = ["short", "normal", "long"].includes(length)
+    ? length
+    : "normal";
+  const validFormat = ["markdown", "plain"].includes(format)
+    ? format
+    : "markdown";
+
   const requestBody = {
     persona: apiPersona,
     messages: formattedMessages,
-    ...(userId ? { user_id: String(userId) } : {}),
     stream: Boolean(stream),
+    length: validLength,
+    format: validFormat,
+    ...(userId ? { user_id: String(userId) } : {}),
   };
 
   const { url, headers } = buildRequestConfig("/v1/chat", {
@@ -369,10 +397,12 @@ export async function* streamPersonaChat({
     headers: {
       ...headers,
       "Content-Type": "application/json",
-      Accept: stream ? "text/event-stream, application/json" : "application/json",
+      Accept: stream
+        ? "text/event-stream, application/json"
+        : "application/json",
     },
     body: JSON.stringify(requestBody),
-    redirect: "follow", // Follow Modal long-wait redirects automatically
+    redirect: "follow",
     signal,
   };
 
@@ -388,25 +418,52 @@ export async function* streamPersonaChat({
       headers: {
         ...direct.headers,
         "Content-Type": "application/json",
-        Accept: stream ? "text/event-stream, application/json" : "application/json",
+        Accept: stream
+          ? "text/event-stream, application/json"
+          : "application/json",
       },
     });
   }
 
   if (res.status === 401 || res.status === 403) {
     const err = new Error(
-      "Authentication required: Please configure a valid CHAT_API_KEY to connect to the Modal Persona API."
+      "Missing or wrong API key (401). Please configure a valid CHAT_API_KEY."
     );
     err.code = "AUTH_REQUIRED";
     err.status = res.status;
     throw err;
   }
 
-  if (!res.ok) {
-    let errMessage = `Chat API error (HTTP ${res.status})`;
+  if (res.status === 404) {
+    const err = new Error(`Unknown persona "${apiPersona}" (404).`);
+    err.status = 404;
+    throw err;
+  }
+
+  if (res.status === 422) {
+    let detail = "Invalid request body (422).";
     try {
       const errJson = await res.json();
-      errMessage = errJson.message || errJson.detail || errJson.error || errMessage;
+      detail = errJson.message || errJson.detail || detail;
+    } catch {
+      // ignore
+    }
+    const err = new Error(
+      typeof detail === "string" ? detail : JSON.stringify(detail)
+    );
+    err.status = 422;
+    throw err;
+  }
+
+  if (!res.ok) {
+    let errMessage =
+      res.status === 502
+        ? "The model failed to generate a reply (502). Please try again."
+        : `Chat API error (HTTP ${res.status})`;
+    try {
+      const errJson = await res.json();
+      errMessage =
+        errJson.message || errJson.detail || errJson.error || errMessage;
     } catch {
       try {
         const text = await res.text();
@@ -422,13 +479,16 @@ export async function* streamPersonaChat({
 
   const contentType = res.headers.get("content-type") || "";
 
-  // Handle non-streaming JSON response: {"reply": "...", "finish_reason": "stop"}
+  // Handle non-streaming JSON response: {"reply": "...", "sources": [...], "finish_reason": "stop", "used_context": true}
   if (!stream || contentType.includes("application/json")) {
     const data = await res.json();
     if (data.type === "error") {
       throw new Error(data.message || "Model error");
     }
     yield { type: "start", persona: apiPersona };
+    if (Array.isArray(data.sources)) {
+      yield { type: "sources", sources: data.sources };
+    }
     if (typeof data.reply === "string") {
       yield { type: "delta", text: data.reply };
     }
@@ -462,7 +522,6 @@ export async function* streamPersonaChat({
         return null;
       }
     }
-    // Also support raw JSON lines if emitted without `data:` prefix
     if (line.startsWith("{") && line.endsWith("}")) {
       try {
         return JSON.parse(line);
@@ -472,6 +531,14 @@ export async function* streamPersonaChat({
     }
     return null;
   };
+
+  const KNOWN_EVENT_TYPES = new Set([
+    "start",
+    "sources",
+    "delta",
+    "done",
+    "error",
+  ]);
 
   try {
     while (true) {
@@ -484,7 +551,8 @@ export async function* streamPersonaChat({
 
       for (const line of lines) {
         const event = processLine(line);
-        if (event) {
+        // Ignore unrecognized event types as specified in the Handover doc
+        if (event && KNOWN_EVENT_TYPES.has(event.type)) {
           yield event;
         }
       }
@@ -493,7 +561,7 @@ export async function* streamPersonaChat({
     if (buffer.trim()) {
       for (const line of buffer.split(/\r?\n/)) {
         const event = processLine(line);
-        if (event) {
+        if (event && KNOWN_EVENT_TYPES.has(event.type)) {
           yield event;
         }
       }
@@ -506,4 +574,3 @@ export async function* streamPersonaChat({
     }
   }
 }
-
