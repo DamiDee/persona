@@ -12,6 +12,7 @@ import {
   getPersonaById,
   resolveApiPersonaId,
 } from "../data/mockPersonas";
+import { getFallbackSermonSources } from "../data/selmanSermons";
 import { chatApi } from "../lib/mockApi";
 import {
   streamPersonaChat,
@@ -40,27 +41,6 @@ function buildConversationTitle(content, personaName) {
   if (cleaned.length <= 44) return cleaned;
   return `${cleaned.slice(0, 42).trim()}…`;
 }
-
-const DEMO_RAG_SOURCES = [
-  {
-    id: 4412,
-    title: "August 2024 Miracle Service With Apostle Joshua Selman",
-    source: "cleaned_AUGUST2024_MIRACLE_SERVICE.txt",
-    chunk_index: 37,
-    similarity: 0.562,
-    excerpt:
-      "...the discerning, the celebrating and the rewarding of spiritual truth in the heart of a believer who desires alignment with the Holy Spirit...",
-  },
-  {
-    id: 1984,
-    title: "Spiritual Intelligence & Walking In The Spirit — Koinonia Global",
-    source: "cleaned_SPIRITUAL_INTELLIGENCE_KOINONIA.txt",
-    chunk_index: 14,
-    similarity: 0.531,
-    excerpt:
-      "...prayer is not merely a transaction; it is the furnace where your spirit comes into alignment with the stature and the mind of Christ...",
-  },
-];
 
 export const useChatStore = create(
   persist(
@@ -526,9 +506,10 @@ export const useChatStore = create(
           let resolvedModelPersona = apiPersonaSlug;
 
           if (useMock) {
-            const isSelman =
-              persona?.id === "persona-01" || apiPersonaSlug === "ajs";
-            retrievedSources = isSelman ? DEMO_RAG_SOURCES : [];
+            retrievedSources = getFallbackSermonSources(
+              trimmed,
+              persona?.id || apiPersonaSlug
+            );
             usedContext = retrievedSources.length > 0;
 
             set((state) => ({
@@ -859,6 +840,36 @@ export const useChatStore = create(
     }),
     {
       name: "persona-chats",
+      version: 2,
+      merge: (persistedState, currentState) => {
+        const merged = { ...currentState, ...(persistedState || {}) };
+        if (Array.isArray(merged.conversations)) {
+          merged.conversations = merged.conversations.map((conv) => ({
+            ...conv,
+            messages: Array.isArray(conv.messages)
+              ? conv.messages.map((msg) => {
+                  if (
+                    msg.role !== "user" &&
+                    !msg.isError &&
+                    msg.finishReason !== "guardrail" &&
+                    (!Array.isArray(msg.sources) || msg.sources.length === 0) &&
+                    msg.content
+                  ) {
+                    return {
+                      ...msg,
+                      sources: getFallbackSermonSources(
+                        msg.content,
+                        conv.personaId
+                      ),
+                    };
+                  }
+                  return msg;
+                })
+              : [],
+          }));
+        }
+        return merged;
+      },
       partialize: (state) => ({
         conversations: state.conversations,
         activeConversationId: state.activeConversationId,

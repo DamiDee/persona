@@ -55,5 +55,4 @@ export function ThemeToggle({ className }) {
     </div>
   );
 }
-
 export default ThemeToggle;

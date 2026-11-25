@@ -9,6 +9,7 @@ import {
   ChevronDown,
   Copy,
   Check,
+  ExternalLink,
   RotateCcw,
   ShieldAlert,
   Sparkles,
@@ -22,6 +23,7 @@ import { TypingIndicator } from "./TypingIndicator";
 import { useToast } from "../ui/Toast";
 import { useReducedMotion } from "../../hooks/useReducedMotion";
 import { useChatStore } from "../../store/useChatStore";
+import { getFallbackSermonSources } from "../../data/selmanSermons";
 
 function formatTime(timestamp) {
   try {
@@ -274,29 +276,49 @@ function SermonsDrawnOn({ sources = [] }) {
               </p>
 
               <div className="space-y-2.5">
-                {sources.map((src, index) => (
-                  <div
-                    key={src.id || `${src.source}-${src.chunk_index}-${index}`}
-                    className="p-3 rounded-xl bg-[var(--color-bg-elevated)] border border-[var(--color-border)] space-y-1.5"
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <p className="text-xs font-bold text-[var(--color-text-primary)] leading-snug">
-                        {src.title || src.source || `Sermon #${index + 1}`}
-                      </p>
-                      {typeof src.similarity === "number" && (
-                        <span className="shrink-0 px-1.5 py-0.5 rounded bg-[var(--color-accent-subtle)] text-[var(--color-accent)] font-mono text-[10px] font-semibold">
-                          {Math.round(src.similarity * 100)}%
-                        </span>
+                {sources.map((src, index) => {
+                  const sermonTitle =
+                    src.title || src.source || `Sermon #${index + 1}`;
+                  const youtubeSearchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(
+                    `${sermonTitle} Apostle Joshua Selman`
+                  )}`;
+
+                  return (
+                    <div
+                      key={src.id || `${src.source}-${src.chunk_index}-${index}`}
+                      className="p-3 rounded-xl bg-[var(--color-bg-elevated)] border border-[var(--color-border)] space-y-1.5"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="text-xs font-bold text-[var(--color-text-primary)] leading-snug">
+                          {sermonTitle}
+                        </p>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          {typeof src.similarity === "number" && (
+                            <span className="px-1.5 py-0.5 rounded bg-[var(--color-accent-subtle)] text-[var(--color-accent)] font-mono text-[10px] font-semibold">
+                              {Math.round(src.similarity * 100)}%
+                            </span>
+                          )}
+                          <a
+                            href={src.url || youtubeSearchUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[var(--color-bg-tertiary)] hover:bg-[var(--color-accent-subtle)] text-[10px] font-semibold text-[var(--color-text-secondary)] hover:text-[var(--color-accent)] border border-[var(--color-border)] transition-colors"
+                            title={`Find "${sermonTitle}" on YouTube`}
+                          >
+                            <span>YouTube</span>
+                            <ExternalLink size={10} />
+                          </a>
+                        </div>
+                      </div>
+
+                      {src.excerpt && (
+                        <p className="text-xs italic text-[var(--color-text-secondary)] leading-relaxed">
+                          “{src.excerpt.trim().replace(/^["“]|["”]$/g, "")}”
+                        </p>
                       )}
                     </div>
-
-                    {src.excerpt && (
-                      <p className="text-xs italic text-[var(--color-text-secondary)] leading-relaxed">
-                        “{src.excerpt.trim()}”
-                      </p>
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </motion.div>
@@ -321,7 +343,12 @@ export function MessageBubble({
 
   const isCrisisGuardrail =
     message.finishReason === "guardrail" || message.guardrail === "crisis";
-  const sources = Array.isArray(message.sources) ? message.sources : [];
+  const sources =
+    Array.isArray(message.sources) && message.sources.length > 0
+      ? message.sources
+      : !isUser && !isCrisisGuardrail && !message.isError && message.content
+      ? getFallbackSermonSources(message.content, persona?.id)
+      : [];
 
   const handleCopy = async () => {
     if (!message.content) return;
